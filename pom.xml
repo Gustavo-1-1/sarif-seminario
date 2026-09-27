@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    Archivo de construcción de SARIF con Maven.
+    Acá declaro la versión de Java, las pocas bibliotecas que usa el sistema
+    y los plugins para compilar, correr las pruebas y lanzar la aplicación.
+    Si querés ejecutar el prototipo desde la terminal, usá "mvn javafx:run";
+    para correr solo las pruebas, "mvn test".
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <!-- Coordenadas del proyecto: grupo, nombre del artefacto y versión del prototipo -->
+    <groupId>ar.edu.seminario</groupId>
+    <artifactId>sarif</artifactId>
+    <version>0.2.0</version>
+    <packaging>jar</packaging>
+
+    <name>SARIF</name>
+    <description>Sistema de Anticipación y Respuesta ante Incendios Forestales (prototipo AP2)</description>
+
+    <!--
+        Propiedades comunes. Fijo la codificación en UTF-8 para que las tildes y
+        eñes de los fuentes se compilen igual en cualquier sistema operativo, y
+        compilo para Java 17 porque uso records y otras novedades del lenguaje.
+        Las versiones de JavaFX y JUnit las centralizo acá para no repetirlas.
+    -->
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <maven.compiler.release>17</maven.compiler.release>
+        <javafx.version>21.0.5</javafx.version>
+        <junit.version>5.10.2</junit.version>
+    </properties>
+
+    <dependencies>
+        <!-- Interfaz de escritorio (vista y controladores del MVC) -->
+        <!-- javafx-controls trae los componentes visuales y javafx-fxml me permite
+             definir las pantallas en archivos FXML separados de los controladores -->
+        <dependency>
+            <groupId>org.openjfx</groupId>
+            <artifactId>javafx-controls</artifactId>
+            <version>${javafx.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.openjfx</groupId>
+            <artifactId>javafx-fxml</artifactId>
+            <version>${javafx.version}</version>
+        </dependency>
+
+        <!-- Driver JDBC de MySQL: única biblioteca externa del sistema (RNF01 precisado) -->
+        <!-- Todo el acceso a datos lo escribí con JDBC puro en los DAO, sin frameworks -->
+        <dependency>
+            <groupId>com.mysql</groupId>
+            <artifactId>mysql-connector-j</artifactId>
+            <version>8.4.0</version>
+        </dependency>
+
+        <!-- Solo para las pruebas: no forma parte del sistema entregado -->
+        <!-- Con scope test, JUnit 5 se usa al compilar y correr las pruebas unitarias (PU)
+             y de integración (PI), pero no viaja con la aplicación -->
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <version>${junit.version}</version>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <!-- Compilador de Java; toma la versión de maven.compiler.release -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.13.0</version>
+            </plugin>
+            <!-- Ejecuta las pruebas en "mvn test"; uso una versión que reconoce JUnit 5 -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>3.2.5</version>
+            </plugin>
+            <!-- Lanza la aplicación con "mvn javafx:run" armando solo el module-path de JavaFX;
+                 sarif.App es la clase principal -->
+            <plugin>
+                <groupId>org.openjfx</groupId>
+                <artifactId>javafx-maven-plugin</artifactId>
+                <version>0.0.8</version>
+                <configuration>
+                    <mainClass>sarif.App</mainClass>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>

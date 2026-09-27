@@ -1,0 +1,22 @@
+# Compilación
+target/
+out/
+*.class
+
+# IDE
+.idea/
+*.iml
+.vscode/
+.settings/
+.project
+.classpath
+
+# Sistema operativo
+Thumbs.db
+.DS_Store
+
+# Configuración local con claves reales (se versiona solo el ejemplo)
+config/sarif.local.properties
+
+# Mosaicos del mapa e imágenes NDVI descargados (se vuelven a bajar solos)
+cache/
