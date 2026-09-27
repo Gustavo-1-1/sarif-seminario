@@ -52,12 +52,13 @@ evidencias/        resultado de las pruebas
    El script 01 crea también el usuario de aplicación `sarif_app`, que solo puede leer y
    escribir datos.
 
-2. Revisar `config/sarif.properties`. Para usar otra clave o servidor sin tocar el archivo
-   versionado, crear `config/sarif.local.properties` con las claves a reemplazar. Ese archivo
-   está en `.gitignore`, así que ahí va también la MAP KEY de NASA FIRMS (se pide gratis en
-   https://firms.modaps.eosdis.nasa.gov/api/map_key/):
+2. Crear `config/sarif.local.properties`. Ese archivo está en `.gitignore` y sus valores
+   reemplazan a los de `config/sarif.properties`, así que ahí van las claves que no se suben
+   al repositorio: la del usuario `sarif_app` (la del `CREATE USER` del script 01) y la
+   MAP KEY de NASA FIRMS (se pide gratis en https://firms.modaps.eosdis.nasa.gov/api/map_key/):
 
    ```
+   db.clave=CLAVE_DE_SARIF_APP
    firms.clave=TU_MAP_KEY
    ```
 
