@@ -1,0 +1,53 @@
+@startuml
+' Figura 6: Diagrama de secuencia del CU07 Sincronizar focos satelitales (con CU14 y CU15)
+skinparam shadowing false
+autonumber
+title CU07 Sincronizar focos satelitales
+
+actor "Operador de guardia" as op
+participant ":SincronizacionControlador" as ctl
+participant ":ServicioSincronizacion" as srv
+participant "fuente:FuenteDeDatos" as fte
+participant ":GeneradorAlertas" as gen
+participant ":ZonaDAO" as zdao
+participant ":FocoDAO" as fdao
+participant ":AlertaDAO" as adao
+participant ":SincronizacionDAO" as sdao
+database "MySQL" as bd
+
+op -> ctl : Sincronizar focos (fuente, días)
+ctl -> srv : sincronizarFocos(fuente, dias, fecha, usuario)
+srv -> bd : setAutoCommit(false)
+srv -> sdao : iniciar("FOCOS", origen, usuario)
+srv -> zdao : listarActivas()
+loop * por cada zona activa
+  srv -> fte : obtenerFocos(zona, dias, fecha)
+  fte --> srv : focos
+  loop * por cada foco
+    alt fuera de la zona
+      srv -> srv : fueraDeZona++
+    else ya registrado (posición, fecha y hora, satélite)
+      srv -> fdao : existe(foco)
+      srv -> srv : duplicados++
+    else foco nuevo
+      srv -> fdao : insertar(foco, idSinc)
+      srv -> zdao : activos(zona)
+      srv -> gen : evaluar(foco, zona, activos)
+      note right : PE1 → CU14 foco en zona\nPE2 → CU15 activo en riesgo
+      gen --> srv : alertas
+      srv -> adao : insertar(alerta) *
+    end
+  end
+end
+srv -> sdao : finalizar(idSinc, leídos, nuevos, detalle)
+srv -> bd : commit()
+srv --> ctl : Resultado
+ctl --> op : muestra leídos, nuevos, duplicados y alertas
+
+group S2 / excepción: fuente no disponible o formato inesperado
+  fte -->> srv : FuenteNoDisponibleException
+  srv -> bd : rollback()
+  srv -> sdao : registrarFallida(motivo)
+  srv --> ctl : Resultado (fallida)
+end
+@enduml

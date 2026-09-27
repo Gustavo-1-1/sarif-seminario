@@ -1,0 +1,13 @@
+@startuml
+' Figura 8: Diagrama de estados de la alerta
+skinparam shadowing false
+title Ciclo de vida de la alerta
+
+[*] --> PENDIENTE : el sistema la genera solo: foco en zona vigilada\no próximo a un activo (sincronización), zona que\nsube a ALTO/EXTREMO o foco con riesgo alto (índice)
+PENDIENTE --> NOTIFICADA : la guardia avisa (radio, teléfono...) y registra\na quién y por qué medio, o aplica el nivel sugerido (CU12);\nqueda quién lo registró y cuándo
+PENDIENTE --> DESCARTADA : falso positivo
+NOTIFICADA --> CERRADA : el foco fue atendido o se extinguió\n(queda quién la cerró y cuándo)
+NOTIFICADA --> DESCARTADA : falso positivo
+CERRADA --> [*]
+DESCARTADA --> [*] : depuración (sql/05_borrado.sql, B-1)
+@enduml

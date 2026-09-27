@@ -1,0 +1,42 @@
+@startuml
+' Figura 7: Diagrama de secuencia del CU10 Sugerir despliegue con «include» CU11
+skinparam shadowing false
+autonumber
+title CU10 Sugerir despliegue preventivo «include» CU11 Registrar asignación
+
+actor "Jefatura de guardia" as op
+participant ":DespliegueControlador" as ctl
+participant ":ServicioDespliegue" as srv
+participant ":IndiceDAO" as idao
+participant ":RecursoDAO" as rdao
+database "MySQL" as bd
+
+op -> ctl : Sugerir despliegue
+ctl -> srv : sugerir(fecha)
+srv -> idao : listarPorFecha(fecha)
+srv -> rdao : listarDisponibles()
+srv -> srv : sugerir(indices, recursos)
+note right
+  1) un terrestre por zona (base propia primero)
+  2) aéreos a EXTREMO y luego ALTO
+  3) terrestres restantes a EXTREMO
+  Se excluyen las zonas en nivel BAJO.
+end note
+srv --> ctl : sugerencia (no modifica la base)
+ctl --> op : muestra la sugerencia
+opt el operador quita filas
+  op -> ctl : Quitar fila
+end
+op -> ctl : Confirmar asignaciones
+ctl -> srv : confirmar(asignaciones, usuario, fecha)
+group CU11 (una única transacción)
+  srv -> bd : setAutoCommit(false)
+  loop * por cada asignación confirmada
+    srv -> rdao : registrarAsignacion(a, usuario, fecha)
+    srv -> rdao : cambiarEstado(recurso, ASIGNADO)
+  end
+  srv -> bd : commit()
+end
+srv --> ctl
+ctl --> op : asignaciones registradas
+@enduml

@@ -1,0 +1,263 @@
+@startuml
+' Figura 4: Clases de diseño del modelo
+skinparam shadowing false
+skinparam classAttributeIconSize 0
+title Clases de diseño del paquete sarif.modelo
+
+class Zona {
+  - id : int
+  - nombre : String
+  - descripcion : String
+  - latitudMin, latitudMax : double
+  - longitudMin, longitudMax : double
+  - vigilanciaActiva : boolean
+  - vertices : List<Vertice>
+  + esPoligono() : boolean
+  + setVertices(vertices : List<Vertice>)
+  + getContorno() : List<Vertice>
+  + contiene(lat : double, lon : double) : boolean
+  + dentroDelRectangulo(lat : double, lon : double) : boolean
+  + seSuperponeCon(otra : Zona) : boolean
+  + validar() : List<String>
+}
+class Vertice <<record>> {
+  latitud, longitud : double
+}
+Zona "1" *-- "0..100" Vertice : contorno (vacío = rectángulo)
+
+class FocoCalor <<record>> {
+  id : Long
+  idZona : int
+  latitud, longitud : double
+  fechaHoraUtc : LocalDateTime
+  satelite : String
+  instrumento : String
+  potenciaFrpMw : Double
+  confianza : Confianza
+}
+
+class RegistroMeteo <<record>> {
+  idZona : int
+  fecha : LocalDate
+  temperaturaMaxC, humedadMinPct : double
+  vientoMaxKmh, precipitacionMm : double
+  esPronostico : boolean
+  humedadSueloM3m3 : Double
+  temperaturaMinC, rafagaMaxKmh : Double
+  direccionVientoGrados : Integer
+  probPrecipitacionPct, evapotranspiracionMm : Double
+  + humedadSueloPct() : Double
+  + cumpleRegla30() : boolean
+}
+
+class DireccionViento <<utilidad>> {
+  + {static} puntoCardinal(grados : int) : String
+  + {static} haciaDonde(gradosDesde : int) : int
+  + {static} describir(gradosDesde : Integer) : String
+}
+RegistroMeteo ..> DireccionViento : dirección del viento
+
+class RegistroNdvi <<record>> {
+  idZona : int
+  fechaImagen : LocalDate
+  ndviMedio : double
+  pixelesValidos : int
+  porcentajeValido : double
+}
+
+class IndiceRiesgo <<record>> {
+  id : Integer
+  idZona : int
+  fecha : LocalDate
+  compHistorica, compMeteorologica, compCombustible : double
+  valorFinal : double
+  nivel : String
+}
+
+class Relevamiento <<record>> {
+  idZona : int
+  cargaTHa : double
+  fecha : LocalDate
+}
+class TipoCombustible <<record>> {
+  id : int
+  nombre : String
+  factorInflamabilidad : double
+}
+class ActivoProtegido <<record>> {
+  id, idZona : int
+  nombre, tipo : String
+  latitud, longitud : double
+  distanciaAlertaKm : double
+}
+class Alerta <<record>> {
+  id : Integer
+  idFoco : Long
+  idActivo : Integer
+  idIndice : Integer
+  tipo : TipoAlerta
+  distanciaKm : Double
+  descripcion : String
+  estado : EstadoAlerta
+  nivelSugerido : NivelAlerta
+  notificacion : Notificacion
+}
+class Notificacion <<record>> {
+  destinatario : String
+  medio : MedioNotificacion
+  usuario : String
+  fechaHora : LocalDateTime
+}
+class Recurso <<record>> {
+  id : int
+  denominacion : String
+  tipo : TipoRecurso
+  dotacion : int
+  estado : EstadoRecurso
+  idZonaBase : Integer
+}
+class Asignacion <<record>> {
+  idZona : int
+  idIndice : Integer
+  indice : Double
+  nivel, motivo : String
+}
+class Usuario <<record>> {
+  id : int
+  nombreUsuario, nombre, apellido, rol : String
+  activo : boolean
+  + puede(permiso : Permiso) : boolean
+}
+class NivelRiesgo <<record>>
+class NivelAlerta <<record>>
+class FilaReporteZona <<record>> {
+  zona : String
+  focos, focosAltaConfianza : int
+  frpPromedioMw : Double
+  diasConIndice, diasAltoOExtremo : int
+  indicePromedio, indiceMaximo : Double
+}
+class EventoGuardia <<record>> {
+  fechaHora : LocalDateTime
+  zona : String
+  tipo : TipoEvento
+  detalle : String
+  nivelAlerta : String
+  usuario : String
+  idAlerta : Integer
+  minutosDesdeAlerta : Long
+}
+class ZonaParaAsignar <<record>> {
+  idZona : int
+  nombreZona : String
+  indice : IndiceRiesgo
+  nivelAlerta : String
+}
+class PosicionRecurso <<record>> {
+  idRecurso : int
+  denominacion : String
+  tipo : TipoRecurso
+  dotacion : int
+  latitud, longitud : double
+  zona : String
+  fechaHora : LocalDateTime
+  usuario, observaciones : String
+}
+class MarcaMapa <<record>> {
+  id : int
+  tipo : TipoMarca
+  descripcion : String
+  latitud, longitud : double
+  zona : String
+  fechaHora : LocalDateTime
+  usuario : String
+}
+class ResumenGuardia <<record>> {
+  alertas, notificadas, cerradas, descartadas : int
+  cambiosNivel, asignaciones : int
+  minutosPromedioAviso : Double
+  minutosMaximoAviso : Long
+}
+class FilaDesempeno <<record>> {
+  nivel : String
+  diasZona, diasConFocos, focos : int
+  + porcentajeConFocos() : Double
+}
+
+enum Confianza { BAJA
+ NOMINAL
+ ALTA }
+enum EstadoAlerta { PENDIENTE
+ NOTIFICADA
+ CERRADA
+ DESCARTADA }
+enum TipoAlerta { FOCO_EN_ZONA
+ ACTIVO_EN_RIESGO
+ RIESGO_ELEVADO
+ FOCO_CON_RIESGO_ALTO
+ NIVEL_ELEVADO }
+enum MedioNotificacion { RADIO
+ TELEFONO
+ MENSAJE
+ PRESENCIAL
+ SISTEMA
+ + {static} elegibles() : MedioNotificacion[] }
+enum TipoEvento { ALERTA_GENERADA
+ ALERTA_NOTIFICADA
+ ALERTA_CERRADA
+ ALERTA_DESCARTADA
+ CAMBIO_NIVEL
+ ASIGNACION
+ RECURSO_UBICADO
+ MARCA_AGREGADA
+ MARCA_QUITADA }
+enum TipoMarca { PUESTO_COMANDO
+ PUNTO_AGUA
+ ACCESO
+ EVACUACION
+ PELIGRO
+ OTRA }
+enum TipoRecurso { TERRESTRE
+ AEREO }
+enum EstadoRecurso { DISPONIBLE
+ ASIGNADO
+ FUERA_DE_SERVICIO }
+enum OrigenDatos { REMOTA
+ ARCHIVO
+ MANUAL }
+enum Rol { ADMINISTRADOR
+ JEFE_GUARDIA
+ OPERADOR
+ + puede(permiso : Permiso) : boolean }
+enum Permiso { OPERAR
+ CAMBIAR_NIVEL_ALERTA
+ ASIGNAR_RECURSOS
+ CONFIGURAR
+ ADMINISTRAR_USUARIOS }
+
+Zona "1" -- "*" FocoCalor
+Zona "1" -- "*" RegistroMeteo
+Zona "1" -- "*" IndiceRiesgo
+Zona "1" -- "*" Relevamiento
+Zona "1" -- "*" ActivoProtegido
+Relevamiento "*" --> "1" TipoCombustible
+FocoCalor "0..1" -- "*" Alerta
+ActivoProtegido "0..1" -- "*" Alerta
+IndiceRiesgo "0..1" -- "*" Alerta
+Alerta ..> NivelAlerta : sugiere
+Asignacion "*" --> "1" Recurso
+IndiceRiesgo ..> NivelRiesgo
+FocoCalor --> Confianza
+Alerta --> EstadoAlerta
+Alerta --> TipoAlerta
+Alerta *-- "0..1" Notificacion : a quién se avisó
+Notificacion --> MedioNotificacion
+EventoGuardia --> TipoEvento
+PosicionRecurso "*" ..> "1" Recurso : última ubicación
+PosicionRecurso --> TipoRecurso
+MarcaMapa --> TipoMarca
+Recurso --> TipoRecurso
+Recurso --> EstadoRecurso
+Usuario ..> Rol : rol
+Rol "*" --> "*" Permiso
+@enduml

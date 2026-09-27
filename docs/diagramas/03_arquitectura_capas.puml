@@ -1,0 +1,41 @@
+@startuml
+' Figura 3: Arquitectura lógica en capas (dependencias en un solo sentido)
+skinparam packageStyle rectangle
+skinparam shadowing false
+title Arquitectura lógica de SARIF (MVC en capas)
+
+package "resources/sarif/vista" as vista <<Vista>> {
+  [Login.fxml]
+  [Principal.fxml]
+  [Tablero.fxml / Zonas.fxml / ...]
+  [sarif.css]
+}
+package "sarif.controlador" as controlador <<Controlador>>
+package "sarif.servicio" as servicio <<Control de casos de uso>>
+package "sarif.fuentes" as fuentes <<Interfaz con servicios externos>>
+package "sarif.datos" as datos <<Acceso a datos (JDBC)>>
+package "sarif.modelo" as modelo <<Entidades>>
+
+database "MySQL 8.0\nbase sarif" as bd
+cloud "NASA FIRMS" as firms
+cloud "Open-Meteo" as meteo
+cloud "Copernicus\nSentinel Hub" as sentinel
+cloud "OpenTopoMap" as topo
+folder "cache/\n(mosaicos e imágenes NDVI)" as cache
+
+vista ..> controlador : fx:controller
+controlador --> servicio
+servicio --> fuentes
+servicio --> datos
+datos --> bd : JDBC
+fuentes --> firms : HTTPS GET (CSV)
+fuentes --> meteo : HTTPS GET (CSV)
+fuentes --> sentinel : OAuth2 + HTTPS POST (JSON, PNG)
+fuentes --> topo : HTTPS GET (mosaicos PNG)
+fuentes --> cache : lectura y escritura
+
+controlador ..> modelo
+servicio ..> modelo
+fuentes ..> modelo
+datos ..> modelo
+@enduml

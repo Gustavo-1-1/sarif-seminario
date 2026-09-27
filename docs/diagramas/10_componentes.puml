@@ -1,0 +1,35 @@
+@startuml
+' Figura 10: Diagrama de componentes del prototipo
+skinparam shadowing false
+title Componentes del prototipo SARIF
+
+component "sarif.jar" as app {
+  component "Vista (FXML + CSS)" as vista
+  component "Controladores JavaFX" as ctl
+  component "Servicios" as srv
+  component "Fuentes de datos" as fte
+  component "DAO" as dao
+  component "Modelo" as mod
+}
+component "OpenJFX 21" as fx
+component "MySQL Connector/J 8.4" as cj
+artifact "config/sarif.properties" as conf
+artifact "datos/*.csv" as csv
+database "MySQL 8.0" as bd
+interface "java.sql (JDBC)" as jdbc
+interface "java.net.http" as http
+
+vista - ctl
+ctl --> srv
+srv --> fte
+srv --> dao
+ctl ..> fx
+vista ..> fx
+dao --> jdbc
+jdbc - cj
+cj --> bd
+dao ..> conf
+fte --> http
+fte ..> csv : modo sin conexión
+srv ..> mod
+@enduml

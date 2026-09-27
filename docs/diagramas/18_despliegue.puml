@@ -1,0 +1,34 @@
+@startuml
+' Figura 18: Diagrama de despliegue
+skinparam shadowing false
+title Despliegue de SARIF en el puesto de guardia del CIPI
+
+node "Equipo de guardia\n(Windows 11, 192.168.10.10)" as pc {
+  node "JVM (Java 17+)" {
+    artifact "sarif.jar" as jar
+    artifact "OpenJFX 21"
+    artifact "mysql-connector-j-8.4.jar"
+  }
+  node "MySQL Server 8.0\n(escucha solo en localhost:3306)" as mysql {
+    database "sarif" as bd
+  }
+  artifact "config/sarif.properties"
+  artifact "datos/*.csv"
+}
+node "Equipo de jefatura\n(192.168.10.11)" as jef
+node "Almacenamiento de red\n(192.168.10.20)" as nas
+node "Router / firewall\n(solo salida al 443)" as router
+cloud "Internet" as inet {
+  node "firms.modaps.eosdis.nasa.gov" as firms
+  node "api.open-meteo.com" as meteo
+}
+
+jar --> bd : JDBC / TCP 3306 (local)
+pc -- router : Ethernet 1000BASE-T, VLAN guardia
+jef -- router
+nas -- router
+pc --> nas : SMB (respaldo diario mysqldump)
+router --> inet : enlace principal y 4G LTE de respaldo
+jar --> firms : HTTPS GET (TLS 1.2/1.3), CSV
+jar --> meteo : HTTPS GET (TLS 1.2/1.3), CSV
+@enduml

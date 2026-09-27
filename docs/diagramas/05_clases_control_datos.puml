@@ -1,0 +1,257 @@
+@startuml
+' Figura 5: Clases de diseño de control, fuentes de datos y acceso a datos
+skinparam shadowing false
+skinparam classAttributeIconSize 0
+title Control, fuentes de datos y acceso a datos
+
+package sarif.servicio {
+  class ServicioSincronizacion {
+    + sincronizarFocos(fuente : FuenteDeDatos, dias : int, hasta : LocalDate, idUsuario : Integer) : Resultado
+    + importarHistorico(archivo : Path, idUsuario : Integer) : Resultado
+    + sincronizarMeteo(fuente : FuenteDeDatos, fecha : LocalDate, idUsuario : Integer) : Resultado
+    + sincronizarFocos(remota : boolean, dias : int, hasta : LocalDate, idUsuario : Integer) : Resultado
+    + cargarMeteoManual(registro : RegistroMeteo, idUsuario : Integer) : Resultado
+    + {static} validarMeteo(registro : RegistroMeteo) : List<String>
+    + avisosDeSincronizacion() : List<String>
+    + sincronizarNdvi(fecha : LocalDate, idUsuario : Integer) : Resultado
+    + ndviVigente(idZona : int, fecha : LocalDate) : Optional<RegistroNdvi>
+    + fuenteSentinel() : FuenteSentinel
+  }
+  class ServicioRecursos {
+    + registrarRecurso(recurso : Recurso)
+    + {static} validarRecurso(recurso : Recurso) : List<String>
+    + cambiarEstado(recurso : Recurso, nuevo : EstadoRecurso)
+  }
+  class ServicioFuentes {
+    + fuentes() : List<FuenteConfigurada>
+    + probar(fuente : FuenteConfigurada) : FuenteConfigurada
+    + guardarConfiguracion(producto : String, minutos : int, dias : int, idUsuario : int)
+    + {static} validarConfiguracion(producto : String, minutos : int, dias : int) : List<String>
+  }
+  class ServicioReportes {
+    + historicoPorZona(desde, hasta : LocalDate) : List<FilaReporteZona>
+    + desempeno(desde, hasta : LocalDate) : List<FilaDesempeno>
+    + cronologia(desde, hasta : LocalDate, idZona : int) : List<EventoGuardia>
+    + {static} resumir(eventos : List<EventoGuardia>) : ResumenGuardia
+    + exportarHtml(destino : Path, datos : ReporteHtml.Datos)
+    + {static} inicioTemporada(fecha : LocalDate) : LocalDate
+  }
+  class ReporteHtml <<utilidad>> {
+    ~ {static} armar(datos : Datos, generado : LocalDateTime) : String
+    + {static} duracion(minutos : Long) : String
+    + {static} tiempoAviso(r : ResumenGuardia) : String
+  }
+  class ServicioRiesgo {
+    + calcularIndices(fecha : LocalDate) : ResultadoCalculo
+  }
+  class CalculadorRiesgo {
+    + componenteHistorica(focos : int) : double
+    + componenteMeteorologica(m : RegistroMeteo) : double
+    + factorSuelo(humedadSueloM3m3 : double) : double
+    + componenteCombustible(r : Relevamiento) : double
+    + valorFinal(h, m, c : double) : double
+    + clasificar(valor : double, niveles : List<NivelRiesgo>) : NivelRiesgo
+  }
+  class GeneradorAlertas {
+    + evaluar(foco : FocoCalor, zona : Zona, activos : List<ActivoProtegido>) : List<Alerta>
+    + evaluarRiesgo(zona : Zona, hoy, ayer : IndiceRiesgo, focos : List<FocoCalor>, vigente : NivelAlerta, niveles : List<NivelAlerta>) : List<Alerta>
+  }
+  class ServicioAlertas {
+    + generarAlertasDeRiesgo(cn : Connection, fecha : LocalDate) : int
+    + notificar(alerta : Alerta, destinatario : String, medio : MedioNotificacion, idUsuario : int)
+    ~ {static} validarNotificacion(destinatario : String, medio : MedioNotificacion) : List<String>
+    + cambiarEstado(alerta : Alerta, nuevo : EstadoAlerta, idUsuario : int)
+    + aplicarSugerencia(alerta : Alerta, fundamento : String, idUsuario : int)
+    + contarPendientes() : int
+    + listarPosteriores(idAlerta : int) : List<Alerta>
+  }
+  class ServicioMapa {
+    + datos(fecha : LocalDate, diasFocos : int) : DatosMapa
+    + mosaicoGuardado(z, x, y : int) : byte[]
+    + descargarMosaico(z, x, y : int) : Descarga
+    + imagenNdvi(zona : Zona, fecha : LocalDate, descargar : boolean) : Descarga
+    + focosRegion(fecha : LocalDate, dias : int) : FocosRegion
+  }
+  class ServicioPronostico {
+    + pronostico(idZona : int, fecha : LocalDate) : Pronostico
+    + actualizar(idUsuario : int) : Resultado
+    + {static} direccionPredominante(dias : List<RegistroMeteo>) : Optional<Integer>
+    + {static} resumen(dias : List<RegistroMeteo>, desde : LocalDate) : String
+  }
+  class ProyeccionMercator <<utilidad>> {
+    + {static} x(longitud, zoom : double) : double
+    + {static} y(latitud, zoom : double) : double
+    + {static} longitud(x, zoom : double) : double
+    + {static} latitud(y, zoom : double) : double
+    + {static} metrosPorPixel(latitud, zoom : double) : double
+    + {static} zoomParaEncuadrar(latMin, latMax, lonMin, lonMax, ancho, alto : double) : double
+  }
+  class ServicioDespliegue {
+    + sugerir(indices : List<IndiceRiesgo>, recursos : List<Recurso>) : List<Asignacion>
+    + confirmar(asignaciones : List<Asignacion>, idUsuario : int, fecha : LocalDate)
+    + zonasParaAjuste(fecha : LocalDate) : List<ZonaParaAsignar>
+    + {static} ajustar(recurso : Recurso, zona : ZonaParaAsignar, motivo : String) : Asignacion
+  }
+  class ServicioZonas {
+    + registrarZona(...) : int
+    + cambiarVigilancia(idZona : int, activa : boolean)
+    + cambiarNivelAlerta(idZona : int, nivel : NivelAlerta, fundamento : String, idUsuario : int)
+    + registrarActivo(activo : ActivoProtegido)
+    + registrarRelevamiento(idZona : int, tipo : TipoCombustible, carga : double, fecha : LocalDate, ...)
+  }
+  class ServicioUbicaciones {
+    + ubicarRecurso(idRecurso : int, lat, lon : double, observaciones : String, idUsuario : int)
+    + agregarMarca(tipo : TipoMarca, descripcion : String, lat, lon : double, idUsuario : int) : int
+    + quitarMarca(idMarca, idUsuario : int)
+    + desplegados() : List<PosicionRecurso>
+    + marcas() : List<MarcaMapa>
+    + recursosAsignados() : List<Recurso>
+    + {static} validarMarca(tipo : TipoMarca, descripcion : String, lat, lon : double) : List<String>
+    + {static} validarUbicacion(lat, lon : double, observaciones : String) : List<String>
+    + {static} zonaQueContiene(zonas : List<Zona>, lat, lon : double) : Integer
+  }
+  class ServicioAutenticacion {
+    + ingresar(usuario : String, clave : String) : Usuario
+  }
+  class ServicioUsuarios {
+    + listar(idAdministrador : int) : List<Usuario>
+    + crear(nuevo : Usuario, clave : String, idAdministrador : int) : int
+    + cambiarRol(idUsuario : int, rol : Rol, idAdministrador : int)
+    + cambiarActivo(idUsuario : int, activo : boolean, idAdministrador : int)
+    + restablecerClave(idUsuario : int, clave : String, idAdministrador : int)
+    + cambiarMiClave(idUsuario : int, actual, nueva, repetida : String)
+  }
+  class Permisos <<utilidad>> {
+    + {static} exigir(idUsuario : int, permiso : Permiso)
+  }
+  class Geo {
+    + {static} distanciaKm(lat1, lon1, lat2, lon2 : double) : double
+  }
+}
+
+package sarif.fuentes {
+  abstract class FuenteDeDatos {
+    + {abstract} obtenerFocos(zona : Zona, dias : int, hasta : LocalDate) : List<FocoCalor>
+    + {abstract} obtenerMeteo(zona : Zona, fechaReferencia : LocalDate) : List<RegistroMeteo>
+    + {abstract} getOrigen() : OrigenDatos
+    # filtrarPorFechas(focos : List<FocoCalor>, dias : int, hasta : LocalDate) : List<FocoCalor>
+  }
+  class FuenteRemota {
+    + {static} MAX_DIAS_POR_CONSULTA : int = 5
+    ~ {static} elegirProducto(disponibilidad : String, producto : String, desde : LocalDate) : String
+    + probarSatelital() : String
+    + probarMeteorologica() : String
+    + obtenerFocosArea(oeste, sur, este, norte : double, dias : int, hasta : LocalDate) : List<FocoCalor>
+    ~ {static} urlMeteo(lat, lon : double, referencia, hoy : LocalDate) : String
+  }
+  class ProveedorMosaicos {
+    + local(z, x, y : int) : byte[]
+    + descargar(z, x, y : int) : byte[]
+  }
+  class FuenteSentinel {
+    + obtenerNdvi(zona : Zona, fecha : LocalDate) : Optional<RegistroNdvi>
+    + imagenNdvi(zona : Zona, fecha : LocalDate) : byte[]
+    + probar() : String
+    ~ {static} leerToken(json : String) : String
+    ~ {static} leerEstadisticas(json : String) : Optional<RegistroNdvi>
+  }
+  class FuenteArchivo
+  class LectorCsvFirms {
+    + {static} leer(csv : String) : List<FocoCalor>
+  }
+  class LectorCsvOpenMeteo {
+    + {static} leer(csv : String, zona : Zona, referencia : LocalDate) : List<RegistroMeteo>
+  }
+  class FuenteNoDisponibleException
+}
+
+package sarif.datos {
+  class ConexionBD {
+    + {static} obtener() : Connection
+  }
+  class ZonaDAO
+  class FocoDAO
+  class SincronizacionDAO
+  class MeteoDAO
+  class NdviDAO
+  class IndiceDAO
+  class AlertaDAO {
+    + notificar(idAlerta, idUsuario : int, destinatario : String, medio : MedioNotificacion) : boolean
+    + resolver(idAlerta : int, anterior, nuevo : EstadoAlerta, idUsuario : int) : boolean
+  }
+  class RecursoDAO
+  class RelevamientoDAO
+  class ConfiguracionDAO
+  class ReporteDAO {
+    + cronologia(desde, hasta : LocalDate, idZona : int) : List<EventoGuardia>
+  }
+  class UsuarioDAO
+  class UbicacionDAO {
+    + insertarPosicion(idRecurso : int, idZona : Integer, lat, lon : double, obs : String, idUsuario : int) : boolean
+    + ultimasDeDesplegados() : List<PosicionRecurso>
+    + insertarMarca(tipo : TipoMarca, descripcion : String, lat, lon : double, idZona : Integer, idUsuario : int) : int
+    + listarMarcas() : List<MarcaMapa>
+    + quitarMarca(idMarca, idUsuario : int) : boolean
+  }
+}
+
+FuenteDeDatos <|-- FuenteRemota
+FuenteDeDatos <|-- FuenteArchivo
+FuenteRemota ..> LectorCsvFirms
+FuenteRemota ..> LectorCsvOpenMeteo
+FuenteArchivo ..> LectorCsvFirms
+FuenteArchivo ..> LectorCsvOpenMeteo
+
+ServicioSincronizacion --> FuenteDeDatos : usa el tipo abstracto
+ServicioSincronizacion --> GeneradorAlertas
+ServicioSincronizacion --> ServicioRiesgo : recálculo tras CU08
+ServicioRiesgo --> CalculadorRiesgo
+ServicioRiesgo --> ServicioAlertas : alertas de riesgo tras CU09
+ServicioSincronizacion --> ServicioAlertas : foco en zona de riesgo alto
+ServicioAlertas --> GeneradorAlertas
+ServicioAlertas --> ServicioZonas : aplica el nivel sugerido (CU12)
+ServicioAlertas ..> AlertaDAO
+ServicioMapa --> ProveedorMosaicos : mapa topográfico
+ServicioMapa --> FuenteSentinel : imagen NDVI
+ServicioMapa ..> IndiceDAO
+ServicioMapa ..> FocoDAO
+ServicioMapa ..> NdviDAO
+ServicioMapa ..> MeteoDAO : viento del día
+ServicioPronostico ..> MeteoDAO
+ServicioPronostico --> ServicioSincronizacion : actualizar (CU08)
+GeneradorAlertas ..> Geo
+
+ServicioSincronizacion ..> FocoDAO
+ServicioSincronizacion ..> AlertaDAO
+ServicioSincronizacion ..> MeteoDAO
+ServicioSincronizacion ..> NdviDAO
+ServicioSincronizacion --> FuenteSentinel : NDVI (RC05), informativo
+ServicioSincronizacion ..> SincronizacionDAO
+ServicioRiesgo ..> IndiceDAO
+ServicioRiesgo ..> RelevamientoDAO
+ServicioDespliegue ..> RecursoDAO
+ServicioZonas ..> ZonaDAO
+ServicioZonas ..> ConfiguracionDAO
+ServicioZonas ..> RelevamientoDAO
+ServicioRecursos ..> RecursoDAO
+ServicioReportes ..> ReporteDAO
+ServicioReportes --> ReporteHtml : exportación
+ServicioFuentes ..> ConfiguracionDAO
+ServicioFuentes ..> SincronizacionDAO
+ServicioFuentes --> ServicioSincronizacion : arma la FuenteRemota a probar
+ServicioSincronizacion ..> FuenteArchivo : respaldo si falla la remota
+ServicioAutenticacion ..> UsuarioDAO
+ServicioUsuarios ..> UsuarioDAO
+ServicioUsuarios --> Permisos
+ServicioZonas --> Permisos : CU12 (jefe de guardia)
+ServicioDespliegue --> Permisos : CU11 (jefe de guardia)
+ServicioFuentes --> Permisos : configuración (administrador)
+ServicioAlertas --> Permisos : notificar (usuario activo)
+Permisos ..> UsuarioDAO : rol vigente
+ServicioMapa --> FuenteRemota : focos de la región
+ServicioUbicaciones ..> UbicacionDAO
+ServicioUbicaciones ..> ZonaDAO : zona del punto
+ServicioUbicaciones ..> RecursoDAO
+ServicioUbicaciones --> Permisos : operar la guardia
+ZonaDAO ..> ConexionBD
+@enduml
