@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+    Pestaña "Alertas" (CU14, CU15 y alertas de riesgo). Acá el operador consulta las alertas que genera
+    el sistema solo (un foco dentro de una zona o cerca de un activo protegido, una zona que sube a riesgo
+    ALTO o EXTREMO, o focos en una zona con riesgo alto), les cambia el estado y aplica el nivel sugerido.
+    El controlador es AlertasControlador; cada fx:id de este archivo tiene un atributo con el mismo
+    nombre en esa clase.
+-->
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.VBox?>
+
+<VBox xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="sarif.controlador.AlertasControlador" spacing="12" styleClass="pestana">
+    <padding><Insets top="16" right="16" bottom="16" left="16"/></padding>
+
+    <!-- Encabezado: título, resumen de pendientes y botón para recargar. El Region vacío empuja el botón a la derecha. -->
+    <HBox alignment="CENTER_LEFT" spacing="10">
+        <VBox spacing="2">
+            <Label text="Alertas generadas" styleClass="titulo-seccion"/>
+            <Label fx:id="lblResumen" styleClass="texto-secundario"/>
+        </VBox>
+        <Region HBox.hgrow="ALWAYS"/>
+        <Button text="Actualizar" onAction="#actualizar"/>
+    </HBox>
+
+    <!-- Tabla de alertas. Los valores de cada columna los cargo desde el controlador con lambdas. -->
+    <TableView fx:id="tabla" VBox.vgrow="ALWAYS">
+        <columnResizePolicy><TableView fx:constant="CONSTRAINED_RESIZE_POLICY"/></columnResizePolicy>
+        <columns>
+            <TableColumn fx:id="colId" text="Id" prefWidth="40"/>
+            <TableColumn fx:id="colFecha" text="Fecha y hora" prefWidth="120"/>
+            <TableColumn fx:id="colZona" text="Zona" prefWidth="200"/>
+            <TableColumn fx:id="colTipo" text="Tipo" prefWidth="145"/>
+            <TableColumn fx:id="colActivo" text="Activo" prefWidth="130"/>
+            <TableColumn fx:id="colDistancia" text="Distancia (km)" prefWidth="95"/>
+            <!-- Confianza de la detección con color y texto (clases confianza-*); la BAJA se resalta. -->
+            <TableColumn fx:id="colConfianza" text="Confianza" prefWidth="85"/>
+            <!-- El estado se dibuja como etiqueta de color con texto (clases estado-* del CSS). -->
+            <TableColumn fx:id="colEstado" text="Estado" prefWidth="105"/>
+            <!-- Solo las alertas de riesgo sugieren un nivel de alerta para la zona. -->
+            <TableColumn fx:id="colSugerido" text="Nivel sugerido" prefWidth="95"/>
+            <!-- A quién se avisó, por qué medio, quién lo registró y cuándo; guion si sigue pendiente. -->
+            <TableColumn fx:id="colNotificacion" text="Notificación" prefWidth="230"/>
+            <TableColumn fx:id="colDescripcion" text="Descripción" prefWidth="300"/>
+        </columns>
+    </TableView>
+
+    <!-- Acciones sobre la alerta seleccionada. Las transiciones válidas las controla el servicio. -->
+    <HBox spacing="8" alignment="CENTER_RIGHT">
+        <!-- El sistema propone el nivel; el cambio lo confirma una persona con fundamento (CU12). -->
+        <Button fx:id="btnAplicarSugerencia" text="Aplicar nivel sugerido..." onAction="#aplicarSugerencia"/>
+        <Label fx:id="lblPermisoNivel" wrapText="true" styleClass="aviso-permiso" maxWidth="260"/>
+        <Region HBox.hgrow="ALWAYS"/>
+        <Label text="Cambiar estado de la alerta seleccionada:" styleClass="texto-secundario"/>
+        <!-- SARIF no envía el aviso: el botón pide a quién se avisó y por qué medio, y lo deja registrado. -->
+        <Button text="Notificar..." onAction="#notificar" styleClass="boton-principal"/>
+        <Button text="Cerrar" onAction="#cerrar"/>
+        <Button text="Descartar" onAction="#descartar" styleClass="boton-peligro"/>
+    </HBox>
+</VBox>

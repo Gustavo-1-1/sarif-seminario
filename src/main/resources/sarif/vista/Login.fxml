@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+    Ventana de ingreso (RFS01). Es lo primero que se ve al abrir SARIF: el operador de guardia escribe su
+    usuario y clave y, si son correctos, App cambia a la ventana principal.
+    La divido en dos paneles lado a lado: la marca del sistema a la izquierda y el formulario a la derecha.
+    El controlador es LoginControlador.
+-->
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.PasswordField?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+
+<HBox xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="sarif.controlador.LoginControlador" styleClass="login" prefWidth="760" prefHeight="440">
+
+    <!-- Panel de presentación: nombre del sistema y organismo, con el degradado oscuro de la marca. -->
+    <VBox styleClass="login-marca" alignment="CENTER_LEFT" spacing="10" prefWidth="340">
+        <padding><Insets top="40" right="36" bottom="40" left="36"/></padding>
+        <Label text="SARIF" styleClass="login-titulo"/>
+        <Label text="Sistema de Anticipación y Respuesta ante Incendios Forestales" wrapText="true"
+               styleClass="login-subtitulo"/>
+        <Label text="Consorcio Intermunicipal de Protección contra Incendios" wrapText="true"
+               styleClass="login-organismo"/>
+    </VBox>
+
+    <!-- Formulario de ingreso. Toma todo el ancho que sobra gracias a HBox.hgrow. -->
+    <VBox styleClass="login-formulario" alignment="CENTER_LEFT" spacing="8" HBox.hgrow="ALWAYS">
+        <padding><Insets top="40" right="48" bottom="40" left="48"/></padding>
+        <Label text="Ingreso a la guardia" styleClass="titulo-seccion"/>
+        <Label text="Ingrese con su usuario y clave." styleClass="texto-secundario"/>
+        <Label text="Usuario" styleClass="etiqueta-campo">
+            <VBox.margin><Insets top="16"/></VBox.margin>
+        </Label>
+        <!-- Pongo onAction en los dos campos para que Enter también dispare el ingreso. -->
+        <TextField fx:id="txtUsuario" promptText="por ejemplo, pnahuel" onAction="#ingresar"/>
+        <Label text="Clave" styleClass="etiqueta-campo"/>
+        <PasswordField fx:id="txtClave" onAction="#ingresar"/>
+        <Button text="Ingresar" defaultButton="true" onAction="#ingresar" maxWidth="Infinity" styleClass="boton-principal">
+            <VBox.margin><Insets top="14"/></VBox.margin>
+        </Button>
+        <!-- Acá el controlador escribe los errores (clave incorrecta, sin conexión a la base, etc.). -->
+        <Label fx:id="lblMensaje" wrapText="true" styleClass="mensaje-error"/>
+    </VBox>
+</HBox>

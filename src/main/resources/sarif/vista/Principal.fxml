@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+    Ventana principal de SARIF, que se abre después del ingreso (RFS01).
+    Arriba va una barra con la marca, la fecha de trabajo y el usuario; en el centro, las pestañas (diez
+    para todos los roles y una más, Usuarios, solo para el administrador).
+    Uso fx:include para separar cada pestaña en su propio FXML y controlador, así ningún archivo queda
+    gigante y cada caso de uso se puede tocar por separado. El controlador es PrincipalControlador.
+-->
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.DatePicker?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.Tab?>
+<?import javafx.scene.control.TabPane?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+
+<BorderPane xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="sarif.controlador.PrincipalControlador" prefWidth="1200" prefHeight="740">
+    <!-- Barra superior oscura. La fecha de trabajo define qué jornada miran todas las pestañas. -->
+    <top>
+        <HBox styleClass="barra-superior" alignment="CENTER_LEFT" spacing="12">
+            <padding><Insets top="10" right="16" bottom="10" left="16"/></padding>
+            <Label text="SARIF" styleClass="marca"/>
+            <Label text="Anticipación y respuesta ante incendios forestales" styleClass="texto-barra"/>
+            <Region HBox.hgrow="ALWAYS"/>
+            <Label text="Fecha de trabajo" styleClass="texto-barra"/>
+            <!-- No editable: la fecha se elige solo desde el calendario, para evitar fechas mal escritas. -->
+            <DatePicker fx:id="dpFechaTrabajo" prefWidth="130" editable="false"/>
+            <Label fx:id="lblUsuario" styleClass="usuario-barra"/>
+            <Button text="Cambiar clave" onAction="#cambiarClave" styleClass="boton-barra"/>
+            <Button text="Salir" onAction="#cerrarSesion" styleClass="boton-barra"/>
+        </HBox>
+    </top>
+    <!--
+        Pestañas. Cada fx:include tiene un fx:id (por ejemplo "tablero") y el FXMLLoader inyecta su
+        controlador en el atributo fx:id + "Controller" de PrincipalControlador (tableroController).
+        El orden de los Tab importa: el controlador actualiza la pestaña según su índice.
+        Si querés agregar una pestaña, sumá un Tab acá y su controlador en PrincipalControlador.
+    -->
+    <center>
+        <TabPane fx:id="pestanas" tabClosingPolicy="UNAVAILABLE">
+            <!-- CU06 y CU09 -->
+            <Tab text="Tablero de riesgo">
+                <content><fx:include fx:id="tablero" source="Tablero.fxml"/></content>
+            </Tab>
+            <!-- Mapa topográfico con el riesgo de cada zona, focos y activos (funciona sin internet) -->
+            <Tab text="Mapa de riesgo">
+                <content><fx:include fx:id="mapa" source="Mapa.fxml"/></content>
+            </Tab>
+            <!-- Pronóstico extendido y vector del viento de cada zona (Open-Meteo) -->
+            <Tab text="Pronóstico">
+                <content><fx:include fx:id="pronostico" source="Pronostico.fxml"/></content>
+            </Tab>
+            <!-- CU01, CU04, CU05 y CU12 -->
+            <Tab text="Zonas">
+                <content><fx:include fx:id="zonas" source="Zonas.fxml"/></content>
+            </Tab>
+            <!-- CU02 y CU03 -->
+            <Tab text="Activos y recursos">
+                <content><fx:include fx:id="activosRecursos" source="ActivosRecursos.fxml"/></content>
+            </Tab>
+            <!-- CU07, CU08, RFS08 y RFS12 -->
+            <Tab text="Sincronización">
+                <content><fx:include fx:id="sincronizacion" source="Sincronizacion.fxml"/></content>
+            </Tab>
+            <!-- Conexiones con los servicios externos y archivos de respaldo -->
+            <Tab text="Fuentes de datos">
+                <content><fx:include fx:id="fuentes" source="Fuentes.fxml"/></content>
+            </Tab>
+            <!-- CU10 y CU11 -->
+            <Tab text="Despliegue">
+                <content><fx:include fx:id="despliegue" source="Despliegue.fxml"/></content>
+            </Tab>
+            <!-- CU14 y CU15 -->
+            <Tab fx:id="tabAlertas" text="Alertas">
+                <content><fx:include fx:id="alertas" source="Alertas.fxml"/></content>
+            </Tab>
+            <!-- CU13 -->
+            <Tab text="Reportes">
+                <content><fx:include fx:id="reportes" source="Reportes.fxml"/></content>
+            </Tab>
+            <!-- Administración de usuarios y roles: va última porque el controlador la quita si no es administrador. -->
+            <Tab fx:id="tabUsuarios" text="Usuarios">
+                <content><fx:include fx:id="usuarios" source="Usuarios.fxml"/></content>
+            </Tab>
+        </TabPane>
+    </center>
+</BorderPane>

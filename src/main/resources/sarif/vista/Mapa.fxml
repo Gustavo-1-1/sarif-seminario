@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+    Pestaña "Mapa de riesgo". A la izquierda, el mapa topográfico (OpenTopoMap, con curvas de nivel) dibujado
+    en un Canvas, con las zonas pintadas según su nivel de riesgo, el NDVI de Sentinel-2, los focos, los activos,
+    los recursos desplegados y las marcas operativas (el menú que aparece al hacer clic lo arma el controlador).
+    A la derecha, las capas, la leyenda, el detalle de lo que está bajo el mouse y las herramientas para
+    marcar una zona nueva como rectángulo o dibujarla como polígono. El controlador es MapaControlador.
+-->
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.canvas.Canvas?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.CheckBox?>
+<?import javafx.scene.control.ComboBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.control.Separator?>
+<?import javafx.scene.control.Spinner?>
+<?import javafx.scene.control.ToggleButton?>
+<?import javafx.scene.control.ToggleGroup?>
+<?import javafx.scene.control.Tooltip?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Pane?>
+<?import javafx.scene.layout.VBox?>
+
+<BorderPane xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="sarif.controlador.MapaControlador" styleClass="pestana">
+    <!-- El Pane crece con la ventana y el Canvas se ata a su tamaño desde el controlador. -->
+    <center>
+        <Pane fx:id="contenedor" styleClass="mapa-contenedor" minWidth="200" minHeight="200">
+            <Canvas fx:id="lienzo"/>
+            <!-- Botones clásicos de zoom, flotando sobre el mapa en la esquina superior izquierda. -->
+            <VBox styleClass="mapa-zoom" layoutX="12" layoutY="12">
+                <Button text="+" onAction="#acercar" styleClass="mapa-zoom-boton">
+                    <tooltip><Tooltip text="Acercar"/></tooltip>
+                </Button>
+                <Button text="−" onAction="#alejar" styleClass="mapa-zoom-boton">
+                    <tooltip><Tooltip text="Alejar"/></tooltip>
+                </Button>
+            </VBox>
+        </Pane>
+    </center>
+
+    <right>
+        <ScrollPane fitToWidth="true" hbarPolicy="NEVER" prefWidth="300">
+            <VBox spacing="10" styleClass="mapa-panel">
+                <padding><Insets top="14" right="14" bottom="14" left="14"/></padding>
+                <Label text="Mapa de riesgo" styleClass="titulo-seccion"/>
+                <Label fx:id="lblFecha" wrapText="true" styleClass="texto-secundario"/>
+
+                <Label text="Capas" styleClass="texto-destacado"/>
+                <CheckBox fx:id="chkZonas" text="Zonas por nivel de riesgo" selected="true"/>
+                <CheckBox fx:id="chkNdvi" text="NDVI de Sentinel-2 en las zonas"/>
+                <Label fx:id="lblEstadoNdvi" wrapText="true" styleClass="texto-secundario"/>
+                <CheckBox fx:id="chkFocos" text="Focos de calor en las zonas (sincronizados)" selected="true"/>
+                <CheckBox fx:id="chkFocosRegion" text="Focos satelitales de toda la región (FIRMS en vivo)" selected="true"/>
+                <Label fx:id="lblEstadoFocos" wrapText="true" styleClass="texto-secundario"/>
+                <CheckBox fx:id="chkActivos" text="Activos protegidos" selected="true"/>
+                <CheckBox fx:id="chkDespliegue" text="Recursos desplegados y marcas" selected="true"/>
+                <CheckBox fx:id="chkViento" text="Viento del día en cada zona (hacia dónde sopla)" selected="true"/>
+                <HBox spacing="6" alignment="CENTER_LEFT">
+                    <Label text="Focos de los últimos"/>
+                    <Spinner fx:id="spDiasFocos" prefWidth="65"/>
+                    <Label text="días"/>
+                </HBox>
+                <HBox spacing="6">
+                    <Button text="Argentina" onAction="#verArgentina" HBox.hgrow="ALWAYS" maxWidth="Infinity"/>
+                    <Button text="Neuquén" onAction="#verNeuquen" HBox.hgrow="ALWAYS" maxWidth="Infinity"/>
+                    <Button text="Zonas" onAction="#verZonas" HBox.hgrow="ALWAYS" maxWidth="Infinity"/>
+                </HBox>
+                <ComboBox fx:id="cmbProvincia" promptText="Ir a una provincia..." maxWidth="Infinity"
+                          visibleRowCount="12"/>
+                <Label text="Botones + y − o rueda del mouse: acercar o alejar · Arrastrar: mover · Clic en un punto: registrar un activo, ubicar un recurso desplegado o poner una marca" wrapText="true" styleClass="texto-secundario"/>
+                <Label fx:id="lblEstadoMapa" wrapText="true" styleClass="texto-secundario"/>
+
+                <Separator/>
+                <Label text="Leyenda" styleClass="texto-destacado"/>
+                <VBox fx:id="leyenda" spacing="4"/>
+
+                <Separator/>
+                <Label text="Detalle" styleClass="texto-destacado"/>
+                <Label fx:id="lblCoordenadas" text="Lat — · Lon —" styleClass="mapa-coordenadas"/>
+                <Label fx:id="lblDetalle" wrapText="true" minHeight="90" text="Pase el mouse sobre el mapa."/>
+
+                <Separator/>
+                <!-- CU01 desde el mapa: un rectángulo arrastrando, o un polígono haciendo clic en cada vértice. -->
+                <Label text="Zona nueva" styleClass="texto-destacado"/>
+                <fx:define>
+                    <ToggleGroup fx:id="grupoForma"/>
+                </fx:define>
+                <HBox spacing="6">
+                    <ToggleButton fx:id="tbRectangulo" text="Rectángulo" toggleGroup="$grupoForma"
+                                  HBox.hgrow="ALWAYS" maxWidth="Infinity"/>
+                    <ToggleButton fx:id="tbPoligono" text="Polígono" toggleGroup="$grupoForma"
+                                  HBox.hgrow="ALWAYS" maxWidth="Infinity"/>
+                </HBox>
+                <Label fx:id="lblAyudaForma" wrapText="true" styleClass="texto-secundario"/>
+                <Label fx:id="lblSeleccion" wrapText="true" styleClass="mapa-coordenadas"/>
+                <HBox spacing="6">
+                    <Button fx:id="btnDeshacer" text="Deshacer vértice" onAction="#deshacerVertice"
+                            HBox.hgrow="ALWAYS" maxWidth="Infinity"/>
+                    <Button fx:id="btnBorrar" text="Borrar" onAction="#borrarSeleccion" HBox.hgrow="ALWAYS" maxWidth="Infinity"/>
+                </HBox>
+                <Button fx:id="btnCrearZona" text="Crear zona con esta forma" onAction="#crearZona"
+                        maxWidth="Infinity" styleClass="boton-principal"/>
+
+                <Separator/>
+                <Label fx:id="lblFuentes" wrapText="true" styleClass="texto-secundario"/>
+            </VBox>
+        </ScrollPane>
+    </right>
+</BorderPane>

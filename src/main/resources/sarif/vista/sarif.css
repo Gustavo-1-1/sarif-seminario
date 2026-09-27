@@ -1,0 +1,363 @@
+/*
+ * Hoja de estilos de SARIF. Los niveles se distinguen por color y por el texto de la etiqueta.
+ *
+ * App la aplica a todas las escenas, así que cualquier clase definida acá se puede usar desde
+ * cualquier FXML con styleClass="...". La paleta tiene dos colores de identidad:
+ *   - oscuro #1f2a36 (azul pizarra): barra superior, títulos y botones secundarios.
+ *   - naranja fuego #d9480f: acento de la marca, botón principal, foco y pestaña seleccionada.
+ * El resto son grises claros para fondos y bordes, así los colores de los niveles resaltan.
+ */
+
+/*
+ * Variables globales. -fx-base y -fx-accent son del tema Modena de JavaFX: cambiándolas, todos los
+ * controles estándar (campos, casillas, selección) toman la paleta sin tener que estilarlos uno por uno.
+ * -color-oscuro y -color-fuego son variables propias que reutilizo más abajo.
+ */
+.root {
+    -fx-font-family: "Segoe UI", "Arial", sans-serif;
+    -fx-font-size: 13px;
+    -fx-base: #eef1f4;
+    -fx-accent: #d9480f;
+    -fx-focus-color: #d9480f;
+    -fx-faint-focus-color: #d9480f22;
+    -color-oscuro: #1f2a36;
+    -color-fuego: #d9480f;
+}
+
+/* ---------- Ingreso ---------- */
+
+/* Panel izquierdo del login: degradado del oscuro de la marca hacia un marrón brasa. */
+.login-marca {
+    -fx-background-color: linear-gradient(to bottom right, #1f2a36, #3b1d10);
+}
+
+/* Nombre "SARIF" grande en un naranja más claro que el fuego, para que contraste sobre el fondo oscuro. */
+.login-titulo {
+    -fx-text-fill: #ff8a3d;
+    -fx-font-size: 44px;
+    -fx-font-weight: bold;
+}
+
+.login-subtitulo {
+    -fx-text-fill: white;
+    -fx-font-size: 17px;
+}
+
+.login-organismo {
+    -fx-text-fill: #b8c2cc;
+    -fx-font-size: 12px;
+    -fx-padding: 18 0 0 0;
+}
+
+/* Panel derecho del login, donde están los campos. */
+.login-formulario {
+    -fx-background-color: white;
+}
+
+.etiqueta-campo {
+    -fx-font-weight: bold;
+    -fx-text-fill: #38434f;
+}
+
+/* Mensajes de error del formulario de ingreso. */
+.mensaje-error {
+    -fx-text-fill: #c62828;
+}
+
+/* ---------- Ventana principal ---------- */
+
+/* Barra superior con el color oscuro de la marca; los textos van claros para que se lean. */
+.barra-superior {
+    -fx-background-color: -color-oscuro;
+}
+
+.marca {
+    -fx-text-fill: #ff8a3d;
+    -fx-font-size: 20px;
+    -fx-font-weight: bold;
+}
+
+.texto-barra {
+    -fx-text-fill: #cfd6dd;
+}
+
+.usuario-barra {
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-padding: 0 0 0 12;
+}
+
+/* Botón "Salir": transparente con borde, para que no compita con el resto de la barra. */
+.boton-barra {
+    -fx-background-color: transparent;
+    -fx-border-color: #5b6b7b;
+    -fx-border-radius: 4;
+    -fx-text-fill: white;
+}
+
+.boton-barra:hover {
+    -fx-background-color: #2f3e4e;
+}
+
+/* Pestañas: les doy más aire y marco la seleccionada con una línea naranja arriba. */
+.tab-pane > .tab-header-area > .headers-region > .tab {
+    -fx-padding: 6 16 6 16;
+}
+
+.tab-pane > .tab-header-area > .headers-region > .tab:selected {
+    -fx-background-color: white;
+    -fx-border-color: -color-fuego transparent transparent transparent;
+    -fx-border-width: 3 0 0 0;
+}
+
+/* Fondo gris muy claro común a todas las pestañas (el contenedor raíz de cada FXML incluido). */
+.pestana {
+    -fx-background-color: #f4f6f8;
+}
+
+/* Textos reutilizables: títulos de sección, textos secundarios, destacados e informativos. */
+.titulo-seccion {
+    -fx-font-size: 17px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #1f2a36;
+}
+
+.texto-secundario {
+    -fx-text-fill: #66727e;
+}
+
+.texto-destacado {
+    -fx-font-weight: bold;
+    -fx-text-fill: #1f2a36;
+}
+
+.mensaje-info {
+    -fx-text-fill: #1f5f99;
+}
+
+/* Recuadro blanco con bordes redondeados, lo uso para agrupar las opciones de sincronización. */
+.tarjeta {
+    -fx-background-color: white;
+    -fx-background-radius: 6;
+    -fx-border-color: #dde3e9;
+    -fx-border-radius: 6;
+}
+
+/* Aviso del tablero cuando falló la última sincronización (RFS20): fondo rojo suave con borde. */
+.aviso-falla {
+    -fx-background-color: #fdecea;
+    -fx-border-color: #c62828;
+    -fx-border-radius: 4;
+    -fx-background-radius: 4;
+    -fx-text-fill: #8e1c1c;
+    -fx-padding: 8 12 8 12;
+}
+
+/* Días del pronóstico que cumplen la regla 30-30-30 (la selección conserva su color normal). */
+.table-row-cell.fila-critica {
+    -fx-background-color: #fde0dc;
+}
+
+.table-row-cell.fila-critica:selected {
+    -fx-background-color: -fx-selection-bar;
+}
+
+/* Registro de sincronización en fuente monoespaciada, para que las líneas con hora queden alineadas. */
+.registro {
+    -fx-font-family: "Consolas", monospace;
+    -fx-font-size: 12px;
+}
+
+/* ---------- Botones ---------- */
+
+/* Todos los botones muestran la manito al pasar el mouse. */
+.button {
+    -fx-cursor: hand;
+    -fx-padding: 6 14 6 14;
+}
+
+/* Acción principal de cada pantalla, en naranja fuego. En hover se oscurece un poco. */
+.boton-principal {
+    -fx-background-color: -color-fuego;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-background-radius: 4;
+}
+
+.boton-principal:hover {
+    -fx-background-color: #b83c0b;
+}
+
+/*
+ * Acciones delicadas (confirmar asignaciones, descartar una alerta). Las pinto con el oscuro de la
+ * marca y no en rojo, para no confundirlas con los niveles EXTREMO o EMERGENCIA de las tablas.
+ */
+.boton-peligro {
+    -fx-background-color: #1f2a36;
+    -fx-text-fill: white;
+    -fx-background-radius: 4;
+}
+
+.boton-peligro:hover {
+    -fx-background-color: #33455a;
+}
+
+/* ---------- Tablas ---------- */
+
+.table-view {
+    -fx-background-color: white;
+    -fx-border-color: #dde3e9;
+}
+
+.table-view .column-header {
+    -fx-background-color: #e7ebef;
+    -fx-font-weight: bold;
+}
+
+/* Fila seleccionada en un naranja muy suave, con texto oscuro para que se siga leyendo bien. */
+.table-row-cell:selected {
+    -fx-background-color: #ffe3d3;
+}
+
+.table-row-cell:selected .table-cell {
+    -fx-text-fill: #1f2a36;
+}
+
+/* ---------- Etiquetas de nivel (color + texto) ---------- */
+
+/*
+ * Base de todas las etiquetas: una "píldora" con fondo de color y texto en negrita. La clase de color
+ * se arma en Celdas.etiqueta() como prefijo + valor (por ejemplo nivel-ALTO), por eso los nombres de
+ * abajo tienen que coincidir exactamente con los valores que muestra cada columna. El texto siempre está
+ * visible, así la información no depende solo del color (accesibilidad).
+ * En los fondos claros (amarillos y grises) cambio el color del texto a uno oscuro para mantener contraste.
+ */
+.etiqueta {
+    -fx-padding: 2 10 2 10;
+    -fx-background-radius: 10;
+    -fx-font-weight: bold;
+    -fx-font-size: 11px;
+    -fx-text-fill: white;
+}
+
+/* Niveles de riesgo del índice (0 a 100): escala tipo semáforo de verde a rojo. */
+.nivel-BAJO      { -fx-background-color: #2e7d32; }
+.nivel-MODERADO  { -fx-background-color: #f9a825; -fx-text-fill: #3a2a00; }
+.nivel-ALTO      { -fx-background-color: #ef6c00; }
+.nivel-EXTREMO   { -fx-background-color: #c62828; }
+
+/* Niveles de alerta de una zona (CU12): de gris neutro a rojo oscuro. */
+.alerta-NORMAL     { -fx-background-color: #cfd8dc; -fx-text-fill: #263238; }
+.alerta-ATENCION   { -fx-background-color: #fff176; -fx-text-fill: #3a2a00; }
+.alerta-ALERTA     { -fx-background-color: #ff9800; }
+.alerta-EMERGENCIA { -fx-background-color: #b71c1c; }
+
+/* Estado de la vigilancia de una zona (CU04 / CU05). */
+.vigilancia-Activa   { -fx-background-color: #2e7d32; }
+.vigilancia-Inactiva { -fx-background-color: #90a4ae; }
+
+/* Estados de una alerta: PENDIENTE en naranja fuego porque es lo que requiere atención. */
+.estado-PENDIENTE  { -fx-background-color: #d9480f; }
+.estado-NOTIFICADA { -fx-background-color: #1f5f99; }
+.estado-CERRADA    { -fx-background-color: #607d8b; }
+.estado-DESCARTADA { -fx-background-color: #b0bec5; -fx-text-fill: #263238; }
+
+/* Estado de un recurso de combate (CU03 y CU11). */
+.recurso-DISPONIBLE        { -fx-background-color: #2e7d32; }
+.recurso-ASIGNADO          { -fx-background-color: #1f5f99; }
+.recurso-FUERA_DE_SERVICIO { -fx-background-color: #90a4ae; -fx-text-fill: #263238; }
+
+/* Estado de las fuentes de datos (pestaña "Fuentes de datos"). */
+.fuente-CONECTADA    { -fx-background-color: #2e7d32; }
+.fuente-DISPONIBLE   { -fx-background-color: #1f5f99; }
+.fuente-SIN_CONEXION { -fx-background-color: #c62828; }
+.fuente-FALTANTE     { -fx-background-color: #ef6c00; }
+.fuente-SIN_PROBAR   { -fx-background-color: #90a4ae; -fx-text-fill: #263238; }
+
+/* Confianza de la detección satelital: la BAJA se resalta para que se verifique antes de actuar. */
+.confianza-ALTA    { -fx-background-color: #455a64; }
+.confianza-NOMINAL { -fx-background-color: #78909c; }
+.confianza-BAJA    { -fx-background-color: #fff176; -fx-text-fill: #3a2a00; }
+
+/* Resultado de una sincronización. */
+.resultado-OK      { -fx-background-color: #2e7d32; }
+.resultado-FALLIDA { -fx-background-color: #c62828; }
+
+/* Usuarios (pestaña "Usuarios") y aviso de las acciones que el rol no permite. */
+.usuario-ACTIVO       { -fx-background-color: #2e7d32; }
+.usuario-DESACTIVADO  { -fx-background-color: #90a4ae; -fx-text-fill: #263238; }
+
+.aviso-permiso {
+    -fx-text-fill: #6d4c41;
+    -fx-font-style: italic;
+}
+
+/* ---------- Alertas automáticas ---------- */
+
+/* Las alertas de riesgo (salen de cruzar el índice con los focos) van en negrita y en color fuego. */
+.alerta-riesgo {
+    -fx-font-weight: bold;
+    -fx-text-fill: #b3261e;
+}
+
+/* Pestaña Alertas con pendientes: el título "Alertas (n)" se pinta de fuego para que se vea desde cualquier pestaña. */
+.tab.pestana-con-alertas .tab-label {
+    -fx-text-fill: #d9480f;
+    -fx-font-weight: bold;
+}
+
+/* Aviso emergente de alertas nuevas, en la esquina de la ventana. */
+.aviso-alertas {
+    -fx-background-color: #fff8f3;
+    -fx-border-color: #d9480f;
+    -fx-border-width: 0 0 0 5;
+}
+
+.aviso-titulo {
+    -fx-font-size: 15px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #b3261e;
+}
+
+/* ---------- Mapa de riesgo ---------- */
+
+.mapa-contenedor {
+    -fx-background-color: #dfe6ea;
+}
+
+.mapa-panel {
+    -fx-background-color: white;
+}
+
+/* Coordenadas con letra de ancho fijo para que los números no "bailen" al mover el mouse. */
+.mapa-coordenadas {
+    -fx-font-family: "Consolas", "Courier New", monospace;
+    -fx-text-fill: #1f2a36;
+}
+
+/* Botones + y − sobre el mapa: una columna blanca con borde, como en los mapas web. */
+.mapa-zoom {
+    -fx-background-color: white;
+    -fx-background-radius: 4;
+    -fx-border-color: rgba(0, 0, 0, 0.35);
+    -fx-border-radius: 4;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.3), 4, 0, 0, 1);
+}
+
+.mapa-zoom-boton {
+    -fx-min-width: 34;
+    -fx-min-height: 34;
+    -fx-pref-width: 34;
+    -fx-pref-height: 34;
+    -fx-padding: 0;
+    -fx-font-size: 20px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #1f2a36;
+    -fx-background-color: transparent;
+    -fx-background-radius: 0;
+    -fx-cursor: hand;
+}
+
+.mapa-zoom-boton:hover {
+    -fx-background-color: #eceff1;
+}

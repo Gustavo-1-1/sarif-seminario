@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+    Pestaña "Activos y recursos" (CU02 Registrar activo protegido y CU03 Registrar recurso).
+    A la izquierda están los activos protegidos de cada zona (poblaciones, infraestructura, etc.), que usa
+    la alerta de activo en riesgo (CU15). A la derecha, los recursos de combate que usa el despliegue (CU10),
+    con botones para liberarlos o marcarlos fuera de servicio.
+    El controlador es ActivosRecursosControlador.
+-->
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ComboBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.control.TitledPane?>
+<?import javafx.scene.layout.ColumnConstraints?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+
+<HBox xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="sarif.controlador.ActivosRecursosControlador" spacing="16" styleClass="pestana">
+    <padding><Insets top="16" right="16" bottom="16" left="16"/></padding>
+
+    <!-- Activos protegidos (CU02). -->
+    <VBox spacing="10" HBox.hgrow="ALWAYS">
+        <Label text="Activos protegidos" styleClass="titulo-seccion"/>
+        <TableView fx:id="tablaActivos" VBox.vgrow="ALWAYS">
+            <columnResizePolicy><TableView fx:constant="CONSTRAINED_RESIZE_POLICY"/></columnResizePolicy>
+            <columns>
+                <TableColumn fx:id="colActZona" text="Zona" prefWidth="170"/>
+                <TableColumn fx:id="colActNombre" text="Nombre" prefWidth="150"/>
+                <TableColumn fx:id="colActTipo" text="Tipo" prefWidth="110"/>
+                <TableColumn fx:id="colActUbicacion" text="Ubicación" prefWidth="130"/>
+                <TableColumn fx:id="colActDistancia" text="Alerta (km)" prefWidth="75"/>
+            </columns>
+        </TableView>
+        <TitledPane text="Nuevo activo protegido" collapsible="false">
+            <GridPane hgap="10" vgap="8">
+                <columnConstraints>
+                    <ColumnConstraints minWidth="110"/>
+                    <ColumnConstraints hgrow="ALWAYS"/>
+                </columnConstraints>
+                <Label text="Zona *" GridPane.rowIndex="0"/>
+                <ComboBox fx:id="cmbActZona" maxWidth="Infinity" GridPane.rowIndex="0" GridPane.columnIndex="1"/>
+                <Label text="Nombre *" GridPane.rowIndex="1"/>
+                <TextField fx:id="txtActNombre" GridPane.rowIndex="1" GridPane.columnIndex="1"/>
+                <Label text="Tipo *" GridPane.rowIndex="2"/>
+                <ComboBox fx:id="cmbActTipo" maxWidth="Infinity" GridPane.rowIndex="2" GridPane.columnIndex="1"/>
+                <!-- Coordenadas en grados decimales; tienen que caer dentro de la zona elegida. -->
+                <Label text="Latitud / longitud *" GridPane.rowIndex="3"/>
+                <HBox spacing="6" GridPane.rowIndex="3" GridPane.columnIndex="1">
+                    <TextField fx:id="txtActLat" promptText="-37.860" HBox.hgrow="ALWAYS"/>
+                    <TextField fx:id="txtActLon" promptText="-71.040" HBox.hgrow="ALWAYS"/>
+                </HBox>
+                <Label text="Distancia alerta (km) *" GridPane.rowIndex="4"/>
+                <TextField fx:id="txtActDistancia" text="5" GridPane.rowIndex="4" GridPane.columnIndex="1"/>
+                <Button text="Registrar activo" onAction="#registrarActivo" styleClass="boton-principal"
+                        GridPane.rowIndex="5" GridPane.columnIndex="1"/>
+            </GridPane>
+        </TitledPane>
+    </VBox>
+
+    <!-- Recursos de combate (CU03). -->
+    <VBox spacing="10" HBox.hgrow="ALWAYS">
+        <Label text="Recursos de combate" styleClass="titulo-seccion"/>
+        <TableView fx:id="tablaRecursos" VBox.vgrow="ALWAYS">
+            <columnResizePolicy><TableView fx:constant="CONSTRAINED_RESIZE_POLICY"/></columnResizePolicy>
+            <columns>
+                <TableColumn fx:id="colRecDenominacion" text="Denominación" prefWidth="160"/>
+                <TableColumn fx:id="colRecTipo" text="Tipo" prefWidth="90"/>
+                <TableColumn fx:id="colRecDotacion" text="Dotación" prefWidth="70"/>
+                <!-- Estado con color y texto (clases recurso-* del CSS). -->
+                <TableColumn fx:id="colRecEstado" text="Estado" prefWidth="140"/>
+                <TableColumn fx:id="colRecBase" text="Zona de base" prefWidth="160"/>
+            </columns>
+        </TableView>
+        <HBox spacing="8">
+            <Button text="Marcar disponible" onAction="#marcarDisponible"/>
+            <Button text="Fuera de servicio" onAction="#marcarFueraDeServicio"/>
+        </HBox>
+        <TitledPane text="Nuevo recurso" collapsible="false">
+            <GridPane hgap="10" vgap="8">
+                <columnConstraints>
+                    <ColumnConstraints minWidth="110"/>
+                    <ColumnConstraints hgrow="ALWAYS"/>
+                </columnConstraints>
+                <Label text="Denominación *" GridPane.rowIndex="0"/>
+                <TextField fx:id="txtRecDenominacion" promptText="Brigada Norte 2" GridPane.rowIndex="0" GridPane.columnIndex="1"/>
+                <Label text="Tipo *" GridPane.rowIndex="1"/>
+                <ComboBox fx:id="cmbRecTipo" maxWidth="Infinity" GridPane.rowIndex="1" GridPane.columnIndex="1"/>
+                <Label text="Dotación *" GridPane.rowIndex="2"/>
+                <TextField fx:id="txtRecDotacion" promptText="8" GridPane.rowIndex="2" GridPane.columnIndex="1"/>
+                <!-- La zona de base es opcional: un medio aéreo, por ejemplo, puede no tener una. -->
+                <Label text="Zona de base" GridPane.rowIndex="3"/>
+                <ComboBox fx:id="cmbRecBase" maxWidth="Infinity" promptText="Sin base" GridPane.rowIndex="3" GridPane.columnIndex="1"/>
+                <Button text="Registrar recurso" onAction="#registrarRecurso" styleClass="boton-principal"
+                        GridPane.rowIndex="4" GridPane.columnIndex="1"/>
+            </GridPane>
+        </TitledPane>
+    </VBox>
+</HBox>
