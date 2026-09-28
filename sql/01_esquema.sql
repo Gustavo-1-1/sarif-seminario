@@ -244,7 +244,7 @@ CREATE TABLE activo_protegido (
 -- RESTRICT para no perder quién hizo cada sincronización.
 CREATE TABLE sincronizacion (
     id_sincronizacion INT UNSIGNED NOT NULL AUTO_INCREMENT,
-    tipo              ENUM('FOCOS','METEO','NDVI') NOT NULL,
+    tipo              ENUM('FOCOS','METEO','NDVI','FWI') NOT NULL,
     origen            ENUM('REMOTA','ARCHIVO','MANUAL') NOT NULL,
     fecha_hora_inicio DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
     fecha_hora_fin    DATETIME     NULL,
@@ -362,6 +362,26 @@ CREATE TABLE registro_ndvi (
     CONSTRAINT ck_ndvi_rango CHECK (ndvi_medio BETWEEN -1 AND 1),
     CONSTRAINT ck_ndvi_porcentaje CHECK (porcentaje_valido BETWEEN 0 AND 100),
     CONSTRAINT fk_ndvi_zona FOREIGN KEY (id_zona) REFERENCES zona_vigilancia (id_zona)
+        ON UPDATE CASCADE ON DELETE CASCADE
+) ENGINE = InnoDB;
+
+-- Índice FWI de peligro meteorológico de incendios que SARIF trae ya calculado del sistema global de
+-- información de incendios de Copernicus (GWIS), del modelo que indica la columna modelo. Como el NDVI,
+-- es un dato informativo: no entra en el índice propio del sistema. Guardo un valor por zona y día, y la
+-- clave única permite reemplazarlo cuando el servicio corrige el pronóstico de un día futuro. La FK es
+-- ON DELETE CASCADE porque el dato no sirve sin su zona. El CHECK acota el índice a la escala publicada
+-- (el FWI no tiene tope teórico, pero por encima de 150 sería un valor imposible o un error de lectura).
+CREATE TABLE registro_fwi (
+    id_fwi           INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    id_zona          INT UNSIGNED NOT NULL,
+    fecha            DATE         NOT NULL,
+    valor            DECIMAL(6,2) NOT NULL,
+    modelo           VARCHAR(20)  NOT NULL,
+    fecha_hora_carga DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT pk_registro_fwi PRIMARY KEY (id_fwi),
+    CONSTRAINT uq_fwi_zona_fecha UNIQUE (id_zona, fecha),
+    CONSTRAINT ck_fwi_valor CHECK (valor BETWEEN 0 AND 150),
+    CONSTRAINT fk_fwi_zona FOREIGN KEY (id_zona) REFERENCES zona_vigilancia (id_zona)
         ON UPDATE CASCADE ON DELETE CASCADE
 ) ENGINE = InnoDB;
 

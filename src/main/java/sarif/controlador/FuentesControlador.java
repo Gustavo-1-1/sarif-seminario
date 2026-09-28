@@ -108,7 +108,7 @@ public class FuentesControlador {
         probar(List.of(fila));
     }
 
-    /** Botón "Probar todas": pruebo las cuatro fuentes, una detrás de otra, en el mismo hilo aparte. */
+    /** Botón "Probar todas": pruebo todas las fuentes, una detrás de otra, en el mismo hilo aparte. */
     @FXML
     private void probarTodas() {
         probar(new ArrayList<>(tabla.getItems()));

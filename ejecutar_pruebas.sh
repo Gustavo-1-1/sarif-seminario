@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Recrea la base de datos, compila el proyecto y ejecuta las 51 pruebas automatizadas.
+# Recrea la base de datos, compila el proyecto y ejecuta las 54 pruebas automatizadas.
 # El resultado queda en evidencias/resultado_pruebas.txt.
 #
 # Uso:  ./ejecutar_pruebas.sh [usuario_administrador_mysql]     (por defecto, root)

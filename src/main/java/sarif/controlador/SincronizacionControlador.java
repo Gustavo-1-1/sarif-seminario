@@ -206,6 +206,15 @@ public class SincronizacionControlador {
     }
 
     /**
+     * Trae de GWIS el índice FWI ya calculado de cada zona activa, desde el día anterior a la fecha de
+     * trabajo hasta el final del pronóstico extendido. Es informativo y siempre remoto, como el NDVI.
+     */
+    @FXML
+    private void sincronizarFwi() {
+        ejecutar("FWI", () -> servicio.sincronizarFwi(Sesion.getFechaTrabajo(), idUsuario()));
+    }
+
+    /**
      * Botón "Importar histórico..." (RFS08): el operador elige un CSV de FIRMS con focos de años
      * anteriores. Si existe la carpeta "datos" del proyecto, abro el selector ahí para ahorrarle pasos.
      */

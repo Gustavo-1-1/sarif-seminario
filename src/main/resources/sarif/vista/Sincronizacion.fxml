@@ -57,6 +57,8 @@
         <Button text="Sincronizar meteorología" onAction="#sincronizarMeteo" styleClass="boton-principal"/>
         <!-- NDVI de Sentinel-2 (RC05): siempre remoto, no tiene archivo de respaldo. -->
         <Button text="Sincronizar NDVI (Sentinel-2)" onAction="#sincronizarNdvi"/>
+        <!-- FWI ya calculado del sistema global de Copernicus (GWIS): también remoto y sin respaldo. -->
+        <Button text="Sincronizar FWI (GWIS)" onAction="#sincronizarFwi"/>
     </HBox>
 
     <!--

@@ -1,10 +1,12 @@
 package sarif.servicio;
 
 import sarif.datos.ConexionBD;
+import sarif.datos.FwiDAO;
 import sarif.datos.MeteoDAO;
 import sarif.fuentes.FuenteRemota;
 import sarif.modelo.DireccionViento;
 import sarif.modelo.Permiso;
+import sarif.modelo.RegistroFwi;
 import sarif.modelo.RegistroMeteo;
 
 import java.sql.Connection;
@@ -16,7 +18,10 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Optional;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * Servicio de la pestaña "Pronóstico": el pronóstico extendido de cada zona (16 días de Open-Meteo, con el
@@ -30,15 +35,23 @@ public class ServicioPronostico {
 
     private final ServicioSincronizacion sincronizacion = new ServicioSincronizacion();
 
-    /** Días de una zona desde el día anterior a la fecha, y cuándo se cargó su último pronóstico (puede ser null). */
-    public record Pronostico(List<RegistroMeteo> dias, LocalDateTime cargado) {
+    /**
+     * Días de una zona desde el día anterior a la fecha, el FWI que publicó GWIS para cada uno de esos días
+     * (puede faltar, porque es un servicio aparte que se sincroniza por separado) y cuándo se cargó el último
+     * pronóstico meteorológico (puede ser null).
+     */
+    public record Pronostico(List<RegistroMeteo> dias, Map<LocalDate, RegistroFwi> fwi, LocalDateTime cargado) {
     }
 
     /** Pronóstico de la zona: desde el día anterior a la fecha hasta 15 días después. */
     public Pronostico pronostico(int idZona, LocalDate fecha) throws SQLException {
+        LocalDate desde = fecha.minusDays(1);
+        LocalDate hasta = fecha.plusDays(FuenteRemota.DIAS_PRONOSTICO - 1L);
         try (Connection cn = ConexionBD.obtener()) {
             MeteoDAO meteo = new MeteoDAO(cn);
-            return new Pronostico(meteo.entre(idZona, fecha.minusDays(1), fecha.plusDays(FuenteRemota.DIAS_PRONOSTICO - 1L)),
+            Map<LocalDate, RegistroFwi> fwi = new FwiDAO(cn).entre(idZona, desde, hasta).stream()
+                    .collect(Collectors.toMap(RegistroFwi::fecha, Function.identity()));
+            return new Pronostico(meteo.entre(idZona, desde, hasta), fwi,
                     meteo.ultimaCargaPronostico(idZona).orElse(null));
         }
     }

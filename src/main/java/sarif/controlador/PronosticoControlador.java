@@ -13,6 +13,7 @@ import javafx.scene.control.TableView;
 import javafx.util.StringConverter;
 import sarif.modelo.DireccionViento;
 import sarif.modelo.Permiso;
+import sarif.modelo.RegistroFwi;
 import sarif.modelo.RegistroMeteo;
 import sarif.modelo.Zona;
 import sarif.servicio.ServicioPronostico;
@@ -25,6 +26,7 @@ import java.sql.SQLException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.Locale;
+import java.util.Map;
 import java.util.function.Function;
 
 /**
@@ -55,10 +57,13 @@ public class PronosticoControlador {
     private TableView<RegistroMeteo> tabla;
     @FXML
     private TableColumn<RegistroMeteo, String> colFecha, colTipo, colTemperatura, colHumedad, colViento, colRafaga,
-            colDireccion, colLluvia, colProbLluvia, colSuelo, colEvapotranspiracion;
+            colDireccion, colLluvia, colProbLluvia, colSuelo, colEvapotranspiracion, colFwi;
 
     private final ServicioPronostico servicio = new ServicioPronostico();
     private final ServicioZonas servicioZonas = new ServicioZonas();
+
+    /** FWI de GWIS por fecha de la zona mostrada; lo carga el servicio junto con el pronóstico. */
+    private Map<LocalDate, RegistroFwi> fwi = Map.of();
 
     @FXML
     private void initialize() {
@@ -85,6 +90,11 @@ public class PronosticoControlador {
         columna(colProbLluvia, r -> r.probPrecipitacionPct() == null ? "—" : cero(r.probPrecipitacionPct()));
         columna(colSuelo, r -> r.humedadSueloPct() == null ? "—" : uno(r.humedadSueloPct()));
         columna(colEvapotranspiracion, r -> r.evapotranspiracionMm() == null ? "—" : uno(r.evapotranspiracionMm()));
+        // El FWI no viene en el registro meteorológico: es de otro servicio y lo busco por fecha.
+        columna(colFwi, r -> {
+            RegistroFwi f = fwi.get(r.fecha());
+            return f == null ? "—" : uno(f.valor()) + " · " + f.clase();
+        });
         // Resalto los días de la regla 30-30-30. Las filas se reciclan al hacer scroll: siempre saco la clase antes.
         tabla.setRowFactory(t -> new TableRow<>() {
             @Override
@@ -131,6 +141,7 @@ public class PronosticoControlador {
         LocalDate fecha = Sesion.getFechaTrabajo();
         try {
             ServicioPronostico.Pronostico p = servicio.pronostico(zona.getId(), fecha);
+            fwi = p.fwi();
             tabla.setPlaceholder(new Label("No hay datos meteorológicos de " + zona.getNombre() + " para estas fechas. "
                     + "Con la fecha de trabajo de hoy, \"Actualizar pronóstico\" trae los próximos 16 días"
                     + (zona.isVigilanciaActiva() ? "." : " (también de las zonas sin vigilancia activa).")));

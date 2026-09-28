@@ -4,18 +4,21 @@ import sarif.datos.AlertaDAO;
 import sarif.datos.ConexionBD;
 import sarif.datos.ConfiguracionDAO;
 import sarif.datos.FocoDAO;
+import sarif.datos.FwiDAO;
 import sarif.datos.MeteoDAO;
 import sarif.datos.NdviDAO;
 import sarif.datos.SincronizacionDAO;
 import sarif.datos.ZonaDAO;
 import sarif.fuentes.FuenteArchivo;
 import sarif.fuentes.FuenteDeDatos;
+import sarif.fuentes.FuenteFwi;
 import sarif.fuentes.FuenteNoDisponibleException;
 import sarif.fuentes.FuenteRemota;
 import sarif.fuentes.FuenteSentinel;
 import sarif.modelo.Alerta;
 import sarif.modelo.FocoCalor;
 import sarif.modelo.OrigenDatos;
+import sarif.modelo.RegistroFwi;
 import sarif.modelo.RegistroMeteo;
 import sarif.modelo.RegistroNdvi;
 import sarif.modelo.Sincronizacion;
@@ -278,6 +281,55 @@ public class ServicioSincronizacion {
     public Optional<RegistroNdvi> ndviVigente(int idZona, LocalDate fecha) throws SQLException {
         try (Connection cn = ConexionBD.obtener()) {
             return new NdviDAO(cn).ultimo(idZona, fecha);
+        }
+    }
+
+    /**
+     * FWI de GWIS para cada zona activa, desde el día anterior a la fecha hasta el final del pronóstico
+     * extendido, así la pestaña Pronóstico muestra el índice del servicio junto a cada día. Es informativo
+     * (no recalcula el índice propio) y no tiene archivo de respaldo, igual que el NDVI. Si el servicio
+     * falla, revierto el lote y la sincronización queda FALLIDA con el motivo.
+     */
+    public Resultado sincronizarFwi(LocalDate fecha, Integer idUsuario) throws SQLException {
+        FuenteFwi fuente = new FuenteFwi();
+        LocalDate desde = fecha.minusDays(1);
+        LocalDate hasta = fecha.plusDays(FuenteRemota.DIAS_PRONOSTICO - 1L);
+        try (Connection cn = ConexionBD.obtener()) {
+            cn.setAutoCommit(false);
+            try {
+                SincronizacionDAO sincronizaciones = new SincronizacionDAO(cn);
+                int idSinc = sincronizaciones.iniciar("FWI", OrigenDatos.REMOTA, idUsuario);
+                FwiDAO fwi = new FwiDAO(cn);
+                int zonas = 0, leidos = 0, nuevos = 0;
+                List<String> sinDato = new ArrayList<>();
+                for (Zona zona : new ZonaDAO(cn).listarActivas()) {
+                    zonas++;
+                    List<RegistroFwi> dias = fuente.obtenerFwi(zona, desde, hasta);
+                    if (dias.isEmpty()) {
+                        sinDato.add(zona.getNombre());
+                    }
+                    for (RegistroFwi r : dias) {
+                        leidos++;
+                        if (fwi.guardar(r)) {
+                            nuevos++;
+                        }
+                    }
+                }
+                String detalle = "FWI (" + FuenteFwi.MODELO + ") de " + zonas + " zonas, " + leidos + " días leídos"
+                        + (sinDato.isEmpty() ? "." : "; sin dato del servicio: " + String.join(", ", sinDato) + ".");
+                sincronizaciones.finalizar(idSinc, leidos, nuevos, detalle.substring(0, Math.min(250, detalle.length())));
+                cn.commit();
+                return new Resultado(true, leidos, nuevos, detalle);
+            } catch (FuenteNoDisponibleException | SQLException e) {
+                return registrarFalla(cn, "FWI", OrigenDatos.REMOTA, idUsuario, e);
+            }
+        }
+    }
+
+    /** Último FWI de la zona hasta la fecha, para mostrarlo en la pantalla de zonas. */
+    public Optional<RegistroFwi> fwiVigente(int idZona, LocalDate fecha) throws SQLException {
+        try (Connection cn = ConexionBD.obtener()) {
+            return new FwiDAO(cn).ultimo(idZona, fecha);
         }
     }
 

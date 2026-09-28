@@ -3,6 +3,7 @@ package sarif.servicio;
 import sarif.datos.ConexionBD;
 import sarif.datos.ConfiguracionDAO;
 import sarif.datos.SincronizacionDAO;
+import sarif.fuentes.FuenteFwi;
 import sarif.fuentes.FuenteNoDisponibleException;
 import sarif.fuentes.FuenteRemota;
 import sarif.fuentes.FuenteSentinel;
@@ -27,7 +28,7 @@ import java.util.stream.Stream;
 
 /**
  * Pantalla "Fuentes de datos": reúno en un solo lugar las conexiones que usa SARIF (el servicio satelital
- * de focos, el meteorológico, Sentinel-2 para el NDVI y los archivos del modo sin conexión), permito probarlas y ajustar la configuración de
+ * de focos, el meteorológico, Sentinel-2 para el NDVI, GWIS para el FWI y los archivos del modo sin conexión), permito probarlas y ajustar la configuración de
  * la sincronización. La clave de FIRMS no se edita desde acá a propósito: vive en
  * config/sarif.local.properties, que no se sube al repositorio, y en pantalla solo muestro sus últimos
  * caracteres.
@@ -41,6 +42,7 @@ public class ServicioFuentes {
     public static final String FIRMS = "NASA FIRMS";
     public static final String OPEN_METEO = "Open-Meteo";
     public static final String SENTINEL = "Copernicus Sentinel-2";
+    public static final String GWIS = "Copernicus GWIS (FWI)";
     public static final String ARCHIVO_FOCOS = "Archivo de focos";
     public static final String ARCHIVO_METEO = "Archivo meteorológico";
 
@@ -52,7 +54,7 @@ public class ServicioFuentes {
     private final ServicioSincronizacion sincronizacion = new ServicioSincronizacion();
 
     /**
-     * Armo las cuatro filas de la pantalla. Los archivos los reviso en el momento porque es instantáneo;
+     * Armo las filas de la pantalla. Los archivos los reviso en el momento porque es instantáneo;
      * los servicios remotos quedan "SIN_PROBAR" hasta que el operador toque "Probar conexión", así abrir
      * la pestaña no depende de internet.
      */
@@ -85,6 +87,9 @@ public class ServicioFuentes {
                 cliente.isBlank() || !conSecreto ? "OAuth2 · credenciales no configuradas (copernicus.cliente y copernicus.secreto)"
                         : "OAuth2 · cliente " + enmascarar(cliente) + " (config/sarif.local.properties)",
                 ultima(ultimas, "NDVI", OrigenDatos.REMOTA), "SIN_PROBAR", "Todavía no se probó la conexión."));
+        filas.add(new FuenteConfigurada(GWIS, "Índice FWI (informativo)", FuenteFwi.SERVIDOR,
+                "Sin clave (WMS público) · capa " + FuenteFwi.CAPA + " · FWI del modelo " + FuenteFwi.MODELO,
+                ultima(ultimas, "FWI", OrigenDatos.REMOTA), "SIN_PROBAR", "Todavía no se probó la conexión."));
         filas.add(archivo(ARCHIVO_FOCOS, "Respaldo sin conexión (focos)", "archivo.focos",
                 "datos/focos_jornada_20260120.csv", ultima(ultimas, "FOCOS", OrigenDatos.ARCHIVO)));
         filas.add(archivo(ARCHIVO_METEO, "Respaldo sin conexión (meteorología)", "archivo.meteo",
@@ -102,6 +107,7 @@ public class ServicioFuentes {
                 case FIRMS -> fuente.conEstado("CONECTADA", sincronizacion.fuenteRemota().probarSatelital());
                 case OPEN_METEO -> fuente.conEstado("CONECTADA", sincronizacion.fuenteRemota().probarMeteorologica());
                 case SENTINEL -> fuente.conEstado("CONECTADA", sincronizacion.fuenteSentinel().probar());
+                case GWIS -> fuente.conEstado("CONECTADA", new FuenteFwi().probar());
                 default -> archivo(fuente.nombre(), fuente.tipo(),
                         fuente.nombre().equals(ARCHIVO_FOCOS) ? "archivo.focos" : "archivo.meteo",
                         fuente.direccion(), fuente.ultimaSincronizacion());

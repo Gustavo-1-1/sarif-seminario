@@ -315,7 +315,7 @@ se sumarían los dispositivos si se implementara el RC07.
 ## Pruebas
 
 ```
-./ejecutar_pruebas.sh        # recrea la base, compila y ejecuta las 51 pruebas
+./ejecutar_pruebas.sh        # recrea la base, compila y ejecuta las 54 pruebas
 mvn test                     # solo las pruebas (las de integración requieren la base creada)
 ```
 

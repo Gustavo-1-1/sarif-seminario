@@ -49,13 +49,15 @@
             <TableColumn fx:id="colProbLluvia" text="Prob. lluvia (%)" prefWidth="95"/>
             <TableColumn fx:id="colSuelo" text="Humedad suelo (%)" prefWidth="110"/>
             <TableColumn fx:id="colEvapotranspiracion" text="Evapotransp. (mm)" prefWidth="110"/>
+            <!-- FWI del modelo ECMWF, traído ya calculado de GWIS (Copernicus); es informativo. -->
+            <TableColumn fx:id="colFwi" text="FWI (GWIS)" prefWidth="135"/>
         </columns>
     </TableView>
 
     <VBox spacing="4" styleClass="leyenda">
         <Label fx:id="lblResumen" styleClass="texto-destacado" wrapText="true"/>
         <Label wrapText="true" styleClass="texto-secundario"
-               text="Dirección: de dónde viene el viento, y la flecha hacia dónde empujaría el fuego. En rojo, los días que cumplen la regla 30-30-30 (más de 30 °C, menos de 30 % de humedad y más de 30 km/h de viento). Humedad del suelo de 0 a 10 cm: por debajo de 10 % el suelo y la vegetación están muy secos. Evapotranspiración: agua que pierden el suelo y las plantas en el día."/>
+               text="Dirección: de dónde viene el viento, y la flecha hacia dónde empujaría el fuego. En rojo, los días que cumplen la regla 30-30-30 (más de 30 °C, menos de 30 % de humedad y más de 30 km/h de viento). Humedad del suelo de 0 a 10 cm: por debajo de 10 % el suelo y la vegetación están muy secos. Evapotranspiración: agua que pierden el suelo y las plantas en el día. FWI: índice meteorológico de peligro de incendios del modelo ECMWF, tomado ya calculado del sistema global de Copernicus (GWIS) con la escala de peligro de ese servicio; es informativo y no interviene en el índice de riesgo de SARIF. Se actualiza desde la pestaña Sincronización."/>
         <Label fx:id="lblMensaje" styleClass="mensaje-info" wrapText="true"/>
     </VBox>
 </VBox>
