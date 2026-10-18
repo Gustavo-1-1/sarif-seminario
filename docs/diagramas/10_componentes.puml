@@ -1,4 +1,5 @@
 @startuml
+!include estilo.puml
 ' Figura 10: Diagrama de componentes del prototipo
 skinparam shadowing false
 title Componentes del prototipo SARIF

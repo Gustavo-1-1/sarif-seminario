@@ -1,0 +1,47 @@
+@startuml
+!include estilo.puml
+hide circle
+skinparam linetype ortho
+title EER — seguridad, catálogos y configuración
+
+entity rol {
+  * id_rol <<PK>>
+  * nombre <<UQ>>
+  descripcion
+}
+entity usuario {
+  * id_usuario <<PK>>
+  * nombre_usuario <<UQ>>
+  * clave_hash
+  * sal
+  * id_rol <<FK>>
+  * activo
+}
+entity parametro {
+  * id_parametro <<PK>>
+  * clave <<UQ>>
+  * valor
+  descripcion
+}
+entity nivel_riesgo {
+  * id_nivel_riesgo <<PK>>
+  * nombre <<UQ>>
+  * umbral_min
+  * umbral_max
+  * orden <<UQ>>
+  * color
+}
+entity nivel_alerta {
+  * id_nivel_alerta <<PK>>
+  * nombre <<UQ>>
+  * orden <<UQ>>
+  descripcion
+}
+entity tipo_combustible {
+  * id_tipo_combustible <<PK>>
+  * nombre <<UQ>>
+  * factor_inflamabilidad
+}
+
+rol ||--o{ usuario : RESTRICT
+@enduml

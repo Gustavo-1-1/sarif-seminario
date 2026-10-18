@@ -1,0 +1,34 @@
+@startuml
+!include estilo.puml
+' Figura 2: comunicación de análisis del CU07.
+left to right direction
+title CU07 Sincronizar focos satelitales — comunicación de análisis
+
+actor "Operador de guardia" as operador
+boundary ":VistaSincronizacion" as vista
+control ":GestorSincronizacion" as gestor
+control ":GeneradorAlertas" as alertas
+entity ":ZonaVigilancia" as zona
+entity ":FocoCalor" as foco
+entity ":ActivoProtegido" as activo
+entity ":Alerta" as alerta
+boundary ":ServicioSatelital" as satelite
+
+operador -> vista : 1: sincronizarFocos()
+vista -> gestor : 2: sincronizar(fecha, días)
+gestor -> zona : 3*: obtenerZonasActivas()
+gestor -> satelite : 4*: obtenerFocos(zona, fecha, días)
+satelite --> gestor : 5: detecciones
+gestor -> foco : 6*: validarDuplicado()
+gestor -> foco : 7*: registrar()
+gestor -> activo : 8*: activosDe(zona)
+gestor -> alertas : 9*: evaluar(foco, zona, activos)
+alertas -> alerta : 10*: crearPendiente()
+gestor --> vista : 11: resultado
+vista --> operador : 12: resumen y alertas
+
+note bottom of alertas
+PE1 → CU14: foco en zona vigilada
+PE2 → CU15: activo en riesgo
+end note
+@enduml

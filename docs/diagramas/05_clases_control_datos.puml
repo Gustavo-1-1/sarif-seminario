@@ -1,4 +1,6 @@
 @startuml
+!include estilo.puml
+left to right direction
 ' Figura 5: Clases de diseño de control, fuentes de datos y acceso a datos
 skinparam shadowing false
 skinparam classAttributeIconSize 0
@@ -15,6 +17,8 @@ package sarif.servicio {
     + avisosDeSincronizacion() : List<String>
     + sincronizarNdvi(fecha : LocalDate, idUsuario : Integer) : Resultado
     + ndviVigente(idZona : int, fecha : LocalDate) : Optional<RegistroNdvi>
+    + sincronizarFwi(fecha : LocalDate, idUsuario : Integer) : Resultado
+    + fwiVigente(idZona : int, fecha : LocalDate) : Optional<RegistroFwi>
     + fuenteSentinel() : FuenteSentinel
   }
   class ServicioRecursos {
@@ -155,6 +159,13 @@ package sarif.fuentes {
     ~ {static} leerToken(json : String) : String
     ~ {static} leerEstadisticas(json : String) : Optional<RegistroNdvi>
   }
+  class FuenteFwi {
+    + obtenerFwi(zona : Zona, fecha : LocalDate) : Optional<RegistroFwi>
+    + obtenerFwi(zona : Zona, desde, hasta : LocalDate) : List<RegistroFwi>
+    + probar() : String
+    ~ {static} url(zona : Zona, fecha : LocalDate) : String
+    ~ {static} promedio(tiff : byte[]) : Optional<Double>
+  }
   class FuenteArchivo
   class LectorCsvFirms {
     + {static} leer(csv : String) : List<FocoCalor>
@@ -174,6 +185,7 @@ package sarif.datos {
   class SincronizacionDAO
   class MeteoDAO
   class NdviDAO
+  class FwiDAO
   class IndiceDAO
   class AlertaDAO {
     + notificar(idAlerta, idUsuario : int, destinatario : String, medio : MedioNotificacion) : boolean
@@ -218,6 +230,7 @@ ServicioMapa ..> FocoDAO
 ServicioMapa ..> NdviDAO
 ServicioMapa ..> MeteoDAO : viento del día
 ServicioPronostico ..> MeteoDAO
+ServicioPronostico ..> FwiDAO : FWI del período
 ServicioPronostico --> ServicioSincronizacion : actualizar (CU08)
 GeneradorAlertas ..> Geo
 
@@ -225,7 +238,9 @@ ServicioSincronizacion ..> FocoDAO
 ServicioSincronizacion ..> AlertaDAO
 ServicioSincronizacion ..> MeteoDAO
 ServicioSincronizacion ..> NdviDAO
+ServicioSincronizacion ..> FwiDAO
 ServicioSincronizacion --> FuenteSentinel : NDVI (RC05), informativo
+ServicioSincronizacion --> FuenteFwi : FWI (RC08), informativo
 ServicioSincronizacion ..> SincronizacionDAO
 ServicioRiesgo ..> IndiceDAO
 ServicioRiesgo ..> RelevamientoDAO

@@ -1,0 +1,86 @@
+@startuml
+!include estilo.puml
+hide circle
+skinparam linetype ortho
+title EER — alertas, recursos y operación de guardia
+
+entity "zona_vigilancia" as zona {
+  * id_zona <<PK>>
+  * nombre
+}
+entity usuario {
+  * id_usuario <<PK>>
+  * nombre_usuario
+}
+entity "foco_calor" as foco {
+  * id_foco <<PK>>
+}
+entity "indice_riesgo" as indice {
+  * id_indice <<PK>>
+}
+entity alerta {
+  * id_alerta <<PK>>
+  id_foco <<FK>>
+  id_activo <<FK>>
+  id_indice <<FK>>
+  id_cambio <<FK>>
+  * tipo
+  * estado
+  datos_notificacion
+}
+entity recurso {
+  * id_recurso <<PK>>
+  * denominacion <<UQ>>
+  * tipo
+  * estado
+  id_zona_base <<FK>>
+}
+entity asignacion {
+  * id_asignacion <<PK>>
+  * id_recurso <<FK>>
+  * id_zona <<FK>>
+  * id_usuario <<FK>>
+  id_indice <<FK>>
+  * fecha
+}
+entity "cambio_nivel_alerta" as cambio {
+  * id_cambio <<PK>>
+  * id_zona <<FK>>
+  * id_nivel_alerta <<FK>>
+  * fundamento
+  * id_usuario <<FK>>
+}
+entity "posicion_recurso" as posicion {
+  * id_posicion <<PK>>
+  * id_recurso <<FK>>
+  id_zona <<FK>>
+  * ubicacion
+  * id_usuario <<FK>>
+}
+entity "marca_mapa" as marca {
+  * id_marca <<PK>>
+  * tipo
+  * ubicacion
+  id_zona <<FK>>
+  * id_usuario <<FK>>
+  fecha_hora_baja
+}
+entity "v_nivel_alerta_vigente" as vnivel <<vista>>
+entity "v_tablero_zonas" as vtablero <<vista>>
+
+foco |o--o{ alerta : CASCADE
+indice |o--o{ alerta : CASCADE
+cambio |o--o{ alerta : CASCADE
+zona |o--o{ recurso : "base / SET NULL"
+recurso ||--o{ asignacion : RESTRICT
+zona ||--o{ asignacion : CASCADE
+usuario ||--o{ asignacion : RESTRICT
+zona ||--o{ cambio : CASCADE
+usuario ||--o{ cambio : RESTRICT
+recurso ||--o{ posicion : RESTRICT
+zona |o--o{ posicion : SET_NULL
+zona |o--o{ marca : SET_NULL
+cambio ..> vnivel
+indice ..> vtablero
+vnivel ..> vtablero
+@enduml

@@ -1,0 +1,33 @@
+@startuml
+!include estilo.puml
+' Figura 30: infraestructura física y de red del puesto de guardia.
+' Direcciones coincidentes con el diagrama de despliegue (figura 31).
+title Infraestructura física y de red del puesto de guardia
+
+cloud "Internet\nFIRMS · Open-Meteo · Copernicus (Sentinel-2 y GWIS) · OpenTopoMap\n(HTTPS TCP 443)" as inet
+
+node "Enlace principal\nFTTH / cable módem" as wan1
+node "Router 4G LTE\n(respaldo automático)" as wan2
+node "Router / firewall\nNAT · solo salida TCP 443 · sin puertos abiertos\n192.168.10.1" as router
+node "Switch gestionable de 8 puertos\nIEEE 802.3 · 1000BASE-T · VLAN 10" as switch
+node "PC de guardia\nSARIF + MySQL 8 (3306 solo en localhost)\n192.168.10.20" as pc
+node "Almacenamiento de respaldo\nmysqldump diario (SMB)\n192.168.10.30" as nas
+node "PC de jefatura\n(consulta de reportes)\n192.168.10.21" as jef
+
+note as ups
+  UPS on-line de 1,5 kVA
+  autonomía ≥ 30 min
+end note
+
+inet -- wan1 : WAN 1
+inet .. wan2 : WAN 2 (respaldo)
+wan1 -- router
+wan2 .. router
+router -- switch : UTP Cat 6
+switch -- pc : Cat 6
+switch -- nas : Cat 6
+switch -- jef : Cat 6
+ups .. router : energía
+ups .. switch
+ups .. pc
+@enduml

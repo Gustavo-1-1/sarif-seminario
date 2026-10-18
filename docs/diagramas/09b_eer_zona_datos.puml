@@ -1,0 +1,85 @@
+@startuml
+!include estilo.puml
+hide circle
+skinparam linetype ortho
+title EER — zona y datos para el cálculo
+
+entity "zona_vigilancia" as zona {
+  * id_zona <<PK>>
+  * nombre <<UQ>>
+  * limites_geograficos
+  * vigilancia_activa
+}
+entity "zona_vertice" as vertice {
+  * id_zona <<PK,FK>>
+  * orden <<PK>>
+  * latitud
+  * longitud
+}
+entity "relevamiento_combustible" as relev {
+  * id_relevamiento <<PK>>
+  * id_zona <<FK>>
+  * id_tipo_combustible <<FK>>
+  * carga_t_ha
+  * fecha
+}
+entity "activo_protegido" as activo {
+  * id_activo <<PK>>
+  * id_zona <<FK>>
+  * nombre
+  * ubicacion
+  * distancia_alerta_km
+}
+entity "sincronizacion" as sincro {
+  * id_sincronizacion <<PK>>
+  * tipo
+  * origen
+  * resultado
+  * registros_nuevos
+}
+entity "foco_calor" as foco {
+  * id_foco <<PK>>
+  * id_zona <<FK>>
+  * id_sincronizacion <<FK>>
+  * ubicacion_fecha <<UQ>>
+  * confianza
+}
+entity "registro_meteo" as meteo {
+  * id_registro <<PK>>
+  * id_zona <<FK,UQ>>
+  * fecha <<UQ>>
+  * variables_meteorologicas
+  * es_pronostico <<UQ>>
+}
+entity "registro_ndvi" as ndvi {
+  * id_ndvi <<PK>>
+  * id_zona <<FK,UQ>>
+  * fecha_imagen <<UQ>>
+  * ndvi_medio
+}
+entity "registro_fwi" as fwi {
+  * id_fwi <<PK>>
+  * id_zona <<FK,UQ>>
+  * fecha <<UQ>>
+  * valor
+  * modelo
+}
+entity "indice_riesgo" as indice {
+  * id_indice <<PK>>
+  * id_zona <<FK,UQ>>
+  * fecha <<UQ>>
+  * componentes
+  * valor_final
+  * id_nivel_riesgo <<FK>>
+}
+
+zona ||--o{ vertice : CASCADE
+zona ||--o{ relev : CASCADE
+zona ||--o{ activo : RESTRICT
+zona ||--o{ foco : RESTRICT
+sincro ||--o{ foco : RESTRICT
+zona ||--o{ meteo : CASCADE
+zona ||--o{ ndvi : CASCADE
+zona ||--o{ fwi : CASCADE
+zona ||--o{ indice : CASCADE
+@enduml

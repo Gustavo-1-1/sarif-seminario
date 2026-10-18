@@ -1,0 +1,37 @@
+' Estilo común de las figuras de SARIF (verde petróleo sobre fondo claro).
+' Se incluye con !include estilo.puml en cada diagrama.
+@startuml
+skinparam shadowing false
+skinparam defaultFontName Segoe UI
+skinparam backgroundColor #FFFFFF
+<style>
+root {
+  FontName "Segoe UI"
+  FontColor #123F39
+  LineColor #1B6E62
+  BackgroundColor #FFFFFF
+}
+title {
+  FontColor #14655A
+  FontSize 16
+  FontStyle bold
+  BackgroundColor transparent
+  LineThickness 0
+}
+node, component, artifact, database, cloud, folder, file, package, rectangle, class, interface, enum, entity, state, usecase, actor, participant, collections, queue, boundary, control, card, stack {
+  BackgroundColor #F0F9F6
+  LineColor #1B6E62
+  LineThickness 1
+  FontColor #123F39
+}
+arrow {
+  LineColor #1B6E62
+  FontColor #1B6E62
+}
+note {
+  BackgroundColor #FFFDF0
+  LineColor #B79B3A
+  FontColor #4A3E14
+}
+</style>
+@enduml

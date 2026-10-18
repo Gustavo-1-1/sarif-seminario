@@ -1,4 +1,6 @@
 @startuml
+!include estilo.puml
+left to right direction
 ' Figura 4: Clases de diseño del modelo
 skinparam shadowing false
 skinparam classAttributeIconSize 0
@@ -63,6 +65,14 @@ class RegistroNdvi <<record>> {
   ndviMedio : double
   pixelesValidos : int
   porcentajeValido : double
+}
+
+class RegistroFwi <<record>> {
+  idZona : int
+  fecha : LocalDate
+  valor : double
+  modelo : String
+  + {static} clase(valor : double) : String
 }
 
 class IndiceRiesgo <<record>> {
@@ -184,25 +194,34 @@ class FilaDesempeno <<record>> {
   + porcentajeConFocos() : Double
 }
 
-enum Confianza { BAJA
+enum Confianza {
+  BAJA
  NOMINAL
- ALTA }
-enum EstadoAlerta { PENDIENTE
+ ALTA
+}
+enum EstadoAlerta {
+  PENDIENTE
  NOTIFICADA
  CERRADA
- DESCARTADA }
-enum TipoAlerta { FOCO_EN_ZONA
+ DESCARTADA
+}
+enum TipoAlerta {
+  FOCO_EN_ZONA
  ACTIVO_EN_RIESGO
  RIESGO_ELEVADO
  FOCO_CON_RIESGO_ALTO
- NIVEL_ELEVADO }
-enum MedioNotificacion { RADIO
+ NIVEL_ELEVADO
+}
+enum MedioNotificacion {
+  RADIO
  TELEFONO
  MENSAJE
  PRESENCIAL
  SISTEMA
- + {static} elegibles() : MedioNotificacion[] }
-enum TipoEvento { ALERTA_GENERADA
+ + {static} elegibles() : MedioNotificacion[]
+}
+enum TipoEvento {
+  ALERTA_GENERADA
  ALERTA_NOTIFICADA
  ALERTA_CERRADA
  ALERTA_DESCARTADA
@@ -210,30 +229,43 @@ enum TipoEvento { ALERTA_GENERADA
  ASIGNACION
  RECURSO_UBICADO
  MARCA_AGREGADA
- MARCA_QUITADA }
-enum TipoMarca { PUESTO_COMANDO
+ MARCA_QUITADA
+}
+enum TipoMarca {
+  PUESTO_COMANDO
  PUNTO_AGUA
  ACCESO
  EVACUACION
  PELIGRO
- OTRA }
-enum TipoRecurso { TERRESTRE
- AEREO }
-enum EstadoRecurso { DISPONIBLE
+ OTRA
+}
+enum TipoRecurso {
+  TERRESTRE
+ AEREO
+}
+enum EstadoRecurso {
+  DISPONIBLE
  ASIGNADO
- FUERA_DE_SERVICIO }
-enum OrigenDatos { REMOTA
+ FUERA_DE_SERVICIO
+}
+enum OrigenDatos {
+  REMOTA
  ARCHIVO
- MANUAL }
-enum Rol { ADMINISTRADOR
+ MANUAL
+}
+enum Rol {
+  ADMINISTRADOR
  JEFE_GUARDIA
  OPERADOR
- + puede(permiso : Permiso) : boolean }
-enum Permiso { OPERAR
+ + puede(permiso : Permiso) : boolean
+}
+enum Permiso {
+  OPERAR
  CAMBIAR_NIVEL_ALERTA
  ASIGNAR_RECURSOS
  CONFIGURAR
- ADMINISTRAR_USUARIOS }
+ ADMINISTRAR_USUARIOS
+}
 
 Zona "1" -- "*" FocoCalor
 Zona "1" -- "*" RegistroMeteo

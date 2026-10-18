@@ -1,0 +1,112 @@
+@startuml
+!include estilo.puml
+' Figura 1: clases de análisis (notación de robustez: interfaz, control y entidad).
+' Cada interfaz es una pestaña de la ventana principal; cada control, un servicio
+' del paquete sarif.servicio; cada entidad, un registro persistido.
+left to right direction
+title Clases de análisis de SARIF (interfaz, control y entidad)
+
+boundary "IU Ingreso" as iuIngreso
+boundary "IU Sincronización" as iuSincro
+boundary "IU Tablero de riesgo" as iuTablero
+boundary "IU Mapa operativo" as iuMapa
+boundary "IU Zonas" as iuZonas
+boundary "IU Activos y recursos" as iuRecursos
+boundary "IU Despliegue" as iuDespliegue
+boundary "IU Alertas" as iuAlertas
+boundary "IU Reportes" as iuReportes
+boundary "IU Usuarios" as iuUsuarios
+boundary "IU Fuentes de datos" as iuFuentes
+
+boundary "Interfaz servicio satelital\n(NASA FIRMS)" as ifFirms
+boundary "Interfaz servicio meteorológico\n(Open-Meteo)" as ifMeteo
+boundary "Interfaz servicio NDVI\n(Copernicus Sentinel-2)" as ifNdvi
+boundary "Interfaz servicio FWI\n(Copernicus GWIS)" as ifFwi
+boundary "Interfaz proveedor de mosaicos\n(OpenTopoMap)" as ifMosaicos
+
+control "Gestor de sesión\ny permisos" as cSesion
+control "Gestor de\nsincronización" as cSincro
+control "Calculador\nde riesgo" as cRiesgo
+control "Generador\nde alertas" as cAlertas
+control "Gestor de zonas" as cZonas
+control "Gestor de activos\ny recursos" as cRecursos
+control "Gestor de\ndespliegue" as cDespliegue
+control "Gestor de mapa,\nmarcas y ubicaciones" as cMapa
+control "Gestor de reportes" as cReportes
+control "Gestor de pronóstico" as cPronostico
+control "Gestor de fuentes\ny configuración" as cFuentes
+
+entity "Usuario" as eUsuario
+entity "Rol" as eRol
+entity "Zona vigilada" as eZona
+entity "Foco de calor" as eFoco
+entity "Registro\nmeteorológico" as eMeteo
+entity "Registro NDVI" as eNdvi
+entity "Registro FWI" as eFwi
+entity "Relevamiento de\ncombustible" as eComb
+entity "Índice de riesgo" as eIndice
+entity "Activo protegido" as eActivo
+entity "Recurso" as eRecurso
+entity "Asignación" as eAsignacion
+entity "Alerta" as eAlerta
+entity "Cambio de nivel\nde alerta" as eCambio
+entity "Marca de mapa" as eMarca
+entity "Ubicación\nde recurso" as ePosicion
+entity "Sincronización" as eSincro
+
+iuIngreso --> cSesion
+iuSincro --> cSincro
+iuTablero --> cRiesgo
+iuMapa --> cMapa
+iuZonas --> cZonas
+iuRecursos --> cRecursos
+iuDespliegue --> cDespliegue
+iuAlertas --> cAlertas
+iuReportes --> cReportes
+iuUsuarios --> cSesion
+iuFuentes --> cFuentes
+
+cSesion --> eUsuario
+cSesion --> eRol
+cSincro --> ifFirms
+cSincro --> ifMeteo
+cSincro --> ifNdvi
+cSincro --> ifFwi
+cSincro --> eSincro
+cSincro --> eFoco
+cSincro --> eMeteo
+cSincro --> eNdvi
+cSincro --> eFwi
+cSincro --> cRiesgo
+cSincro --> cAlertas
+cRiesgo --> eIndice
+cRiesgo --> eZona
+cRiesgo --> eMeteo
+cRiesgo --> eComb
+cRiesgo --> eFoco
+cRiesgo --> cAlertas
+cAlertas --> eAlerta
+cAlertas --> eActivo
+cAlertas --> eCambio
+cZonas --> eZona
+cZonas --> eComb
+cRecursos --> eActivo
+cRecursos --> eRecurso
+cDespliegue --> eAsignacion
+cDespliegue --> eIndice
+cDespliegue --> eRecurso
+cMapa --> eMarca
+cMapa --> ePosicion
+cMapa --> eZona
+cMapa --> eNdvi
+cMapa --> ifMosaicos
+cMapa --> ifNdvi
+iuMapa --> cPronostico
+cPronostico --> eMeteo
+cPronostico --> eFwi
+cPronostico --> ifMeteo
+cReportes --> eAlerta
+cReportes --> eCambio
+cReportes --> eAsignacion
+cFuentes --> eSincro
+@enduml

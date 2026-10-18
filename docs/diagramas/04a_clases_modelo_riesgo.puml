@@ -1,0 +1,46 @@
+@startuml
+!include estilo.puml
+left to right direction
+skinparam classAttributeIconSize 0
+title Modelo — zonas, datos e índice de riesgo
+
+class Zona {
+  - id : int
+  - nombre : String
+  - límites : double
+  - vertices : List<Vertice>
+  + contiene(lat, lon : double) : boolean
+  + seSuperponeCon(otra : Zona) : boolean
+  + validar() : List<String>
+}
+class Vertice <<record>>
+class FocoCalor <<record>>
+class RegistroMeteo <<record>> {
+  temperaturaMaxC, humedadMinPct : double
+  vientoMaxKmh, precipitacionMm : double
+  humedadSueloM3m3 : Double
+}
+class RegistroNdvi <<record>>
+class RegistroFwi <<record>>
+class IndiceRiesgo <<record>> {
+  compHistorica, compMeteorologica : double
+  compCombustible, valorFinal : double
+}
+class Relevamiento <<record>>
+class TipoCombustible <<record>>
+class ActivoProtegido <<record>>
+enum Confianza
+enum OrigenDatos
+
+Zona "1" *-- "0..100" Vertice : contorno
+Zona "1" -- "*" FocoCalor
+Zona "1" -- "*" RegistroMeteo
+Zona "1" -- "*" RegistroNdvi
+Zona "1" -- "*" RegistroFwi
+Zona "1" -- "*" IndiceRiesgo
+Zona "1" -- "*" Relevamiento
+Zona "1" -- "*" ActivoProtegido
+Relevamiento "*" --> "1" TipoCombustible
+FocoCalor --> Confianza
+RegistroMeteo --> OrigenDatos
+@enduml

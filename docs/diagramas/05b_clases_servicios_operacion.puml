@@ -1,0 +1,41 @@
+@startuml
+!include estilo.puml
+left to right direction
+skinparam classAttributeIconSize 0
+title Servicios — mapa, pronóstico y operación de guardia
+
+class ServicioMapa
+class ServicioPronostico
+class ServicioDespliegue
+class ServicioUbicaciones
+class ServicioReportes
+class ReporteHtml <<utilidad>>
+class ServicioRecursos
+class ServicioFuentes
+class ServicioUsuarios
+class ServicioAutenticacion
+class ProyeccionMercator <<utilidad>>
+class ProveedorMosaicos
+class FuenteSentinel
+class FuenteRemota
+class "DAO de dominio" as dao
+class Permisos <<utilidad>>
+
+ServicioMapa --> ProveedorMosaicos
+ServicioMapa --> FuenteSentinel
+ServicioMapa --> FuenteRemota : focos regionales
+ServicioMapa --> ProyeccionMercator
+ServicioPronostico ..> dao
+ServicioDespliegue ..> dao
+ServicioUbicaciones ..> dao
+ServicioReportes ..> dao
+ServicioReportes --> ReporteHtml
+ServicioRecursos ..> dao
+ServicioFuentes ..> dao
+ServicioUsuarios ..> dao
+ServicioAutenticacion ..> dao
+ServicioDespliegue --> Permisos
+ServicioUbicaciones --> Permisos
+ServicioFuentes --> Permisos
+ServicioUsuarios --> Permisos
+@enduml

@@ -1,0 +1,52 @@
+@startuml
+!include estilo.puml
+left to right direction
+skinparam classAttributeIconSize 0
+title Modelo — operación, alertas, recursos y auditoría
+
+class Alerta <<record>> {
+  tipo : TipoAlerta
+  estado : EstadoAlerta
+  nivelSugerido : NivelAlerta
+  notificacion : Notificacion
+}
+class Notificacion <<record>>
+class Recurso <<record>>
+class Asignacion <<record>>
+class PosicionRecurso <<record>>
+class MarcaMapa <<record>>
+class Usuario <<record>> {
+  rol : String
+  activo : boolean
+  + puede(permiso : Permiso) : boolean
+}
+class EventoGuardia <<record>>
+class ResumenGuardia <<record>>
+class FilaReporteZona <<record>>
+class FilaDesempeno <<record>>
+class NivelAlerta <<record>>
+class NivelRiesgo <<record>>
+enum TipoAlerta
+enum EstadoAlerta
+enum MedioNotificacion
+enum TipoRecurso
+enum EstadoRecurso
+enum TipoMarca
+enum TipoEvento
+enum Rol
+enum Permiso
+
+Alerta *-- "0..1" Notificacion
+Alerta --> TipoAlerta
+Alerta --> EstadoAlerta
+Alerta ..> NivelAlerta : sugiere
+Notificacion --> MedioNotificacion
+Recurso --> TipoRecurso
+Recurso --> EstadoRecurso
+Asignacion "*" --> "1" Recurso
+PosicionRecurso "*" ..> "1" Recurso
+MarcaMapa --> TipoMarca
+EventoGuardia --> TipoEvento
+Usuario ..> Rol
+Rol "*" --> "*" Permiso
+@enduml

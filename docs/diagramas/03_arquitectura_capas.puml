@@ -1,4 +1,5 @@
 @startuml
+!include estilo.puml
 ' Figura 3: Arquitectura lógica en capas (dependencias en un solo sentido)
 skinparam packageStyle rectangle
 skinparam shadowing false
@@ -20,6 +21,7 @@ database "MySQL 8.0\nbase sarif" as bd
 cloud "NASA FIRMS" as firms
 cloud "Open-Meteo" as meteo
 cloud "Copernicus\nSentinel Hub" as sentinel
+cloud "Copernicus GWIS\n(índice FWI)" as gwis
 cloud "OpenTopoMap" as topo
 folder "cache/\n(mosaicos e imágenes NDVI)" as cache
 
@@ -29,10 +31,11 @@ servicio --> fuentes
 servicio --> datos
 datos --> bd : JDBC
 fuentes --> firms : HTTPS GET (CSV)
-fuentes --> meteo : HTTPS GET (CSV)
-fuentes --> sentinel : OAuth2 + HTTPS POST (JSON, PNG)
-fuentes --> topo : HTTPS GET (mosaicos PNG)
-fuentes --> cache : lectura y escritura
+fuentes --> meteo : HTTPS GET (CSV y JSON)
+fuentes --> sentinel : HTTPS POST (OAuth2, JSON -> PNG)
+fuentes --> gwis : HTTPS GET (WMS, GeoTIFF)
+fuentes --> topo : HTTPS GET (teselas PNG)
+fuentes --> cache : mosaicos e imágenes NDVI
 
 controlador ..> modelo
 servicio ..> modelo

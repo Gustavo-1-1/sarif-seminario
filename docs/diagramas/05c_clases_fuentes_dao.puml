@@ -1,0 +1,55 @@
+@startuml
+!include estilo.puml
+left to right direction
+skinparam classAttributeIconSize 0
+title Fuentes externas y acceso a datos
+
+package sarif.fuentes {
+  abstract class FuenteDeDatos
+  class FuenteRemota
+  class FuenteArchivo
+  class FuenteSentinel
+  class FuenteFwi
+  class ProveedorMosaicos
+  class LectorCsvFirms
+  class LectorCsvOpenMeteo
+}
+package sarif.datos {
+  class ConexionBD
+  class ZonaDAO
+  class FocoDAO
+  class MeteoDAO
+  class NdviDAO
+  class FwiDAO
+  class IndiceDAO
+  class AlertaDAO
+  class RecursoDAO
+  class RelevamientoDAO
+  class SincronizacionDAO
+  class ConfiguracionDAO
+  class ReporteDAO
+  class UbicacionDAO
+  class UsuarioDAO
+}
+
+FuenteDeDatos <|-- FuenteRemota
+FuenteDeDatos <|-- FuenteArchivo
+FuenteRemota ..> LectorCsvFirms
+FuenteRemota ..> LectorCsvOpenMeteo
+FuenteArchivo ..> LectorCsvFirms
+FuenteArchivo ..> LectorCsvOpenMeteo
+ZonaDAO ..> ConexionBD
+FocoDAO ..> ConexionBD
+MeteoDAO ..> ConexionBD
+NdviDAO ..> ConexionBD
+FwiDAO ..> ConexionBD
+IndiceDAO ..> ConexionBD
+AlertaDAO ..> ConexionBD
+RecursoDAO ..> ConexionBD
+RelevamientoDAO ..> ConexionBD
+SincronizacionDAO ..> ConexionBD
+ConfiguracionDAO ..> ConexionBD
+ReporteDAO ..> ConexionBD
+UbicacionDAO ..> ConexionBD
+UsuarioDAO ..> ConexionBD
+@enduml

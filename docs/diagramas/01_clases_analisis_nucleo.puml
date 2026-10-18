@@ -1,0 +1,61 @@
+@startuml
+' Figura: Clases de análisis del núcleo de detección y anticipación
+skinparam shadowing false
+skinparam dpi 200
+skinparam defaultFontName Calibri
+skinparam defaultFontSize 12
+skinparam ArrowColor #107A64
+skinparam ArrowThickness 1.2
+skinparam titleFontColor #107A64
+skinparam titleFontSize 15
+skinparam BoundaryBackgroundColor #EEF7F4
+skinparam BoundaryBorderColor #107A64
+skinparam ControlBackgroundColor #EEF7F4
+skinparam ControlBorderColor #107A64
+skinparam EntityBackgroundColor #EEF7F4
+skinparam EntityBorderColor #107A64
+skinparam ActorBorderColor #107A64
+skinparam ActorBackgroundColor #EEF7F4
+left to right direction
+title Clases de análisis del núcleo (detección y anticipación)
+
+actor "Operador\nde guardia" as op
+boundary "IU Sincronización" as iuSinc
+boundary "IU Tablero\nde riesgo" as iuTab
+boundary "IU Alertas" as iuAl
+boundary "Servicio satelital\n(NASA FIRMS)" as sat
+boundary "Servicio meteorológico\n(Open-Meteo)" as met
+
+control "Gestor de\nsincronización" as gSinc
+control "Calculador\nde riesgo" as calc
+control "Generador\nde alertas" as gen
+
+entity "Zona vigilada" as zona
+entity "Foco de calor" as foco
+entity "Registro\nmeteorológico" as reg
+entity "Relevamiento\nde combustible" as rel
+entity "Índice de riesgo" as ind
+entity "Activo protegido" as act
+entity "Alerta" as al
+
+op --> iuSinc
+op --> iuTab
+op --> iuAl
+iuSinc --> gSinc
+iuTab --> calc
+iuAl --> gen
+gSinc --> sat
+gSinc --> met
+gSinc --> foco
+gSinc --> reg
+gSinc --> gen : evalúa cada\nfoco nuevo
+gSinc --> calc : recalcula tras\nla meteorología
+calc --> zona
+calc --> foco
+calc --> reg
+calc --> rel
+calc --> ind
+gen --> act
+gen --> ind
+gen --> al
+@enduml

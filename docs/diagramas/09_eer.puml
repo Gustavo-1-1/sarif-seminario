@@ -1,0 +1,323 @@
+@startuml
+!include estilo.puml
+' Figura 9: modelo entidad-relación extendido de la base sarif.
+' Transcribe sql/01_esquema.sql: 22 tablas y 3 vistas.
+' PK = clave primaria, FK = clave foránea, UQ = clave única.
+hide circle
+skinparam linetype ortho
+title Modelo entidad-relación extendido de la base sarif (22 tablas y 3 vistas)
+
+entity "rol" as rol {
+  * id_rol : TINYINT UNSIGNED <<PK>>
+  --
+  * nombre : VARCHAR(30) <<UQ>>
+  descripcion : VARCHAR(150)
+}
+
+entity "usuario" as usuario {
+  * id_usuario : INT UNSIGNED <<PK>>
+  --
+  * nombre_usuario : VARCHAR(30) <<UQ>>
+  * nombre : VARCHAR(60)
+  * apellido : VARCHAR(60)
+  * clave_hash : CHAR(64)
+  * sal : CHAR(32)
+  * id_rol : TINYINT UNSIGNED <<FK>>
+  * activo : BOOLEAN
+}
+
+entity "parametro" as parametro {
+  * id_parametro : SMALLINT UNSIGNED <<PK>>
+  --
+  * clave : VARCHAR(50) <<UQ>>
+  * valor : VARCHAR(100)
+  descripcion : VARCHAR(200)
+}
+
+entity "nivel_riesgo" as nivelriesgo {
+  * id_nivel_riesgo : TINYINT UNSIGNED <<PK>>
+  --
+  * nombre : VARCHAR(20) <<UQ>>
+  * umbral_min : DECIMAL(5,2)
+  * umbral_max : DECIMAL(5,2)
+  * orden : TINYINT UNSIGNED <<UQ>>
+  * color : CHAR(7)
+}
+
+entity "nivel_alerta" as nivelalerta {
+  * id_nivel_alerta : TINYINT UNSIGNED <<PK>>
+  --
+  * nombre : VARCHAR(20) <<UQ>>
+  * orden : TINYINT UNSIGNED <<UQ>>
+  descripcion : VARCHAR(150)
+}
+
+entity "tipo_combustible" as tipocomb {
+  * id_tipo_combustible : TINYINT UNSIGNED <<PK>>
+  --
+  * nombre : VARCHAR(60) <<UQ>>
+  * factor_inflamabilidad : DECIMAL(3,2)
+}
+
+entity "zona_vigilancia" as zona {
+  * id_zona : INT UNSIGNED <<PK>>
+  --
+  * nombre : VARCHAR(80) <<UQ>>
+  descripcion : VARCHAR(250)
+  * latitud_min : DECIMAL(8,5)
+  * latitud_max : DECIMAL(8,5)
+  * longitud_min : DECIMAL(8,5)
+  * longitud_max : DECIMAL(8,5)
+  * vigilancia_activa : BOOLEAN
+  * fecha_alta : DATETIME
+}
+
+entity "zona_vertice" as vertice {
+  * id_zona : INT UNSIGNED <<PK, FK>>
+  * orden : SMALLINT UNSIGNED <<PK>>
+  --
+  * latitud : DECIMAL(8,5)
+  * longitud : DECIMAL(8,5)
+}
+
+entity "relevamiento_combustible" as relevamiento {
+  * id_relevamiento : INT UNSIGNED <<PK>>
+  --
+  * id_zona : INT UNSIGNED <<FK>>
+  * id_tipo_combustible : TINYINT UNSIGNED <<FK>>
+  * carga_t_ha : DECIMAL(5,2)
+  * fecha_relevamiento : DATE
+  * id_usuario : INT UNSIGNED <<FK>>
+  observaciones : VARCHAR(250)
+}
+
+entity "activo_protegido" as activo {
+  * id_activo : INT UNSIGNED <<PK>>
+  --
+  * id_zona : INT UNSIGNED <<FK, UQ>>
+  * nombre : VARCHAR(80) <<UQ>>
+  * tipo : ENUM(POBLACION, INFRAESTRUCTURA, AREA_PROTEGIDA, PRODUCTIVO)
+  * latitud : DECIMAL(8,5)
+  * longitud : DECIMAL(8,5)
+  * distancia_alerta_km : DECIMAL(5,2)
+}
+
+entity "sincronizacion" as sincro {
+  * id_sincronizacion : INT UNSIGNED <<PK>>
+  --
+  * tipo : ENUM(FOCOS, METEO, NDVI, FWI)
+  * origen : ENUM(REMOTA, ARCHIVO, MANUAL)
+  * fecha_hora_inicio : DATETIME
+  fecha_hora_fin : DATETIME
+  * resultado : ENUM(OK, FALLIDA)
+  * registros_leidos : INT UNSIGNED
+  * registros_nuevos : INT UNSIGNED
+  detalle : VARCHAR(250)
+  id_usuario : INT UNSIGNED <<FK>>
+}
+
+entity "foco_calor" as foco {
+  * id_foco : BIGINT UNSIGNED <<PK>>
+  --
+  * id_zona : INT UNSIGNED <<FK>>
+  * id_sincronizacion : INT UNSIGNED <<FK>>
+  * latitud : DECIMAL(8,5) <<UQ>>
+  * longitud : DECIMAL(8,5) <<UQ>>
+  * fecha_hora_utc : DATETIME <<UQ>>
+  * satelite : VARCHAR(10) <<UQ>>
+  * instrumento : ENUM(MODIS, VIIRS)
+  potencia_frp_mw : DECIMAL(8,2)
+  * confianza : ENUM(BAJA, NOMINAL, ALTA)
+}
+
+entity "registro_meteo" as meteo {
+  * id_registro : INT UNSIGNED <<PK>>
+  --
+  * id_zona : INT UNSIGNED <<FK, UQ>>
+  * fecha : DATE <<UQ>>
+  * temperatura_max_c : DECIMAL(4,1)
+  * humedad_min_pct : DECIMAL(4,1)
+  * viento_max_kmh : DECIMAL(5,1)
+  * precipitacion_mm : DECIMAL(5,1)
+  humedad_suelo_m3m3 : DECIMAL(4,3)
+  temperatura_min_c : DECIMAL(4,1)
+  rafaga_max_kmh : DECIMAL(5,1)
+  direccion_viento_grados : SMALLINT UNSIGNED
+  prob_precipitacion_pct : DECIMAL(4,1)
+  evapotranspiracion_mm : DECIMAL(4,1)
+  * es_pronostico : BOOLEAN <<UQ>>
+  * origen : ENUM(REMOTA, ARCHIVO, MANUAL)
+  * fecha_hora_carga : DATETIME
+}
+
+entity "registro_ndvi" as ndvi {
+  * id_ndvi : INT UNSIGNED <<PK>>
+  --
+  * id_zona : INT UNSIGNED <<FK, UQ>>
+  * fecha_imagen : DATE <<UQ>>
+  * ndvi_medio : DECIMAL(4,3)
+  * pixeles_validos : INT UNSIGNED
+  * porcentaje_valido : DECIMAL(5,1)
+  * fecha_hora_carga : DATETIME
+}
+
+entity "registro_fwi" as fwi {
+  * id_fwi : INT UNSIGNED <<PK>>
+  --
+  * id_zona : INT UNSIGNED <<FK, UQ>>
+  * fecha : DATE <<UQ>>
+  * valor : DECIMAL(6,2)
+  * modelo : VARCHAR(20)
+  * fecha_hora_carga : DATETIME
+}
+
+entity "indice_riesgo" as indice {
+  * id_indice : INT UNSIGNED <<PK>>
+  --
+  * id_zona : INT UNSIGNED <<FK, UQ>>
+  * fecha : DATE <<UQ>>
+  * comp_historica : DECIMAL(4,3)
+  * comp_meteorologica : DECIMAL(4,3)
+  * comp_combustible : DECIMAL(4,3)
+  * valor_final : DECIMAL(5,2)
+  * id_nivel_riesgo : TINYINT UNSIGNED <<FK>>
+  * fecha_hora_calculo : DATETIME
+}
+
+entity "alerta" as alerta {
+  * id_alerta : INT UNSIGNED <<PK>>
+  --
+  id_foco : BIGINT UNSIGNED <<FK, UQ>>
+  id_activo : INT UNSIGNED <<FK, UQ>>
+  id_indice : INT UNSIGNED <<FK>>
+  id_cambio : INT UNSIGNED <<FK>>
+  * tipo : ENUM(FOCO_EN_ZONA, ACTIVO_EN_RIESGO, RIESGO_ELEVADO, FOCO_CON_RIESGO_ALTO, NIVEL_ELEVADO) <<UQ>>
+  * fecha_hora : DATETIME
+  distancia_km : DECIMAL(6,2)
+  * descripcion : VARCHAR(250)
+  * estado : ENUM(PENDIENTE, NOTIFICADA, CERRADA, DESCARTADA)
+  id_nivel_alerta_sugerido : TINYINT UNSIGNED <<FK>>
+  id_usuario_notifica : INT UNSIGNED <<FK>>
+  fecha_hora_notificacion : DATETIME
+  notificado_a : VARCHAR(120)
+  medio_notificacion : ENUM(RADIO, TELEFONO, MENSAJE, PRESENCIAL, SISTEMA)
+  id_usuario_resolucion : INT UNSIGNED <<FK>>
+  fecha_hora_resolucion : DATETIME
+}
+
+entity "recurso" as recurso {
+  * id_recurso : INT UNSIGNED <<PK>>
+  --
+  * denominacion : VARCHAR(60) <<UQ>>
+  * tipo : ENUM(TERRESTRE, AEREO)
+  * dotacion : SMALLINT UNSIGNED
+  * estado : ENUM(DISPONIBLE, ASIGNADO, FUERA_DE_SERVICIO)
+  id_zona_base : INT UNSIGNED <<FK>>
+}
+
+entity "asignacion" as asignacion {
+  * id_asignacion : INT UNSIGNED <<PK>>
+  --
+  * id_recurso : INT UNSIGNED <<FK, UQ>>
+  * id_zona : INT UNSIGNED <<FK>>
+  * id_usuario : INT UNSIGNED <<FK>>
+  id_indice : INT UNSIGNED <<FK>>
+  * fecha : DATE <<UQ>>
+  * fecha_hora_registro : DATETIME
+  observaciones : VARCHAR(250)
+}
+
+entity "cambio_nivel_alerta" as cambio {
+  * id_cambio : INT UNSIGNED <<PK>>
+  --
+  * id_zona : INT UNSIGNED <<FK>>
+  * id_nivel_alerta : TINYINT UNSIGNED <<FK>>
+  * fecha_hora : DATETIME
+  * fundamento : VARCHAR(250)
+  * id_usuario : INT UNSIGNED <<FK>>
+}
+
+entity "posicion_recurso" as posicion {
+  * id_posicion : INT UNSIGNED <<PK>>
+  --
+  * id_recurso : INT UNSIGNED <<FK>>
+  id_zona : INT UNSIGNED <<FK>>
+  * latitud : DECIMAL(8,5)
+  * longitud : DECIMAL(8,5)
+  * fecha_hora : DATETIME
+  observaciones : VARCHAR(120)
+  * id_usuario : INT UNSIGNED <<FK>>
+}
+
+entity "marca_mapa" as marca {
+  * id_marca : INT UNSIGNED <<PK>>
+  --
+  * tipo : ENUM(PUESTO_COMANDO, PUNTO_AGUA, ACCESO, EVACUACION, PELIGRO, OTRA)
+  * descripcion : VARCHAR(120)
+  * latitud : DECIMAL(8,5)
+  * longitud : DECIMAL(8,5)
+  id_zona : INT UNSIGNED <<FK>>
+  * fecha_hora : DATETIME
+  * id_usuario : INT UNSIGNED <<FK>>
+  fecha_hora_baja : DATETIME
+  id_usuario_baja : INT UNSIGNED <<FK>>
+}
+
+entity "v_combustible_vigente" as vcomb <<vista>> {
+  id_zona, id_tipo_combustible, tipo_combustible
+  factor_inflamabilidad, carga_t_ha, fecha_relevamiento
+}
+
+entity "v_nivel_alerta_vigente" as vnivel <<vista>> {
+  id_zona, id_nivel_alerta, nivel_alerta, desde
+}
+
+entity "v_tablero_zonas" as vtablero <<vista>> {
+  id_zona, nombre, vigilancia_activa, fecha_indice
+  indice, nivel_riesgo, nivel_alerta
+}
+
+rol ||--o{ usuario : "RESTRICT"
+zona ||--o{ vertice : "CASCADE"
+zona ||--o{ relevamiento : "CASCADE"
+tipocomb ||--o{ relevamiento : "RESTRICT"
+usuario ||--o{ relevamiento : "RESTRICT"
+zona ||--o{ activo : "RESTRICT"
+usuario |o--o{ sincro : "RESTRICT"
+zona ||--o{ foco : "RESTRICT"
+sincro ||--o{ foco : "RESTRICT"
+zona ||--o{ meteo : "CASCADE"
+zona ||--o{ ndvi : "CASCADE"
+zona ||--o{ fwi : "CASCADE"
+zona ||--o{ indice : "CASCADE"
+nivelriesgo ||--o{ indice : "RESTRICT"
+foco ||--o{ alerta : "CASCADE"
+activo |o--o{ alerta : "RESTRICT"
+indice |o--o{ alerta : "CASCADE"
+cambio |o--o{ alerta : "CASCADE"
+nivelalerta |o--o{ alerta : "sugerido"
+usuario |o--o{ alerta : "notifica / resuelve"
+zona |o--o{ recurso : "base (SET NULL)"
+recurso ||--o{ asignacion : "RESTRICT"
+zona ||--o{ asignacion : "CASCADE"
+usuario ||--o{ asignacion : "RESTRICT"
+indice |o--o{ asignacion : "SET NULL"
+zona ||--o{ cambio : "CASCADE"
+nivelalerta ||--o{ cambio : "RESTRICT"
+usuario ||--o{ cambio : "RESTRICT"
+recurso ||--o{ posicion : "RESTRICT"
+zona |o--o{ posicion : "SET NULL"
+usuario ||--o{ posicion : "RESTRICT"
+zona |o--o{ marca : "SET NULL"
+usuario ||--o{ marca : "alta / baja"
+
+relevamiento .[#1B6E62,dashed].> vcomb
+cambio .[#1B6E62,dashed].> vnivel
+indice .[#1B6E62,dashed].> vtablero
+vnivel .[#1B6E62,dashed].> vtablero
+
+note bottom of vtablero
+  Las tres vistas resuelven el dato vigente de cada zona
+  a partir del historial: no se guarda en zona_vigilancia.
+end note
+@enduml

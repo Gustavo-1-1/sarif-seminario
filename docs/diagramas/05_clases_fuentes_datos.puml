@@ -1,0 +1,79 @@
+@startuml
+' Figura: Jerarquía de fuentes de datos y acceso a datos de la sincronización
+skinparam shadowing false
+skinparam dpi 170
+skinparam defaultFontName Calibri
+skinparam defaultFontSize 12
+skinparam classAttributeIconSize 0
+skinparam ArrowColor #107A64
+skinparam titleFontColor #107A64
+skinparam titleFontSize 15
+skinparam ClassBackgroundColor #EEF7F4
+skinparam ClassBorderColor #107A64
+skinparam ClassHeaderBackgroundColor #DDF0EC
+skinparam PackageBorderColor #17937D
+skinparam PackageFontColor #107A64
+skinparam stereotypeCBackgroundColor #FFFFFF
+title Fuentes de datos y acceso a datos de la sincronización
+
+package sarif.servicio {
+  class ServicioSincronizacion {
+    + sincronizarFocos(fuente : FuenteDeDatos, dias, hasta, idUsuario) : Resultado
+    + sincronizarMeteo(fuente : FuenteDeDatos, fecha, idUsuario) : Resultado
+    + importarHistorico(archivo : Path, idUsuario) : Resultado
+  }
+}
+
+package sarif.fuentes {
+  abstract class FuenteDeDatos {
+    + {abstract} obtenerFocos(zona : Zona, dias : int, hasta : LocalDate) : List<FocoCalor>
+    + {abstract} obtenerMeteo(zona : Zona, fechaReferencia : LocalDate) : List<RegistroMeteo>
+    + {abstract} getOrigen() : OrigenDatos
+    # filtrarPorFechas(focos, dias, hasta) : List<FocoCalor>
+  }
+  class FuenteRemota {
+    - claveFirms : String
+    - productoFirms : String
+    - cliente : HttpClient
+    + probarSatelital() : String
+    + probarMeteorologica() : String
+  }
+  class FuenteArchivo {
+    - archivoFocos : Path
+    - archivoMeteo : Path
+    + obtenerTodosLosFocos() : List<FocoCalor>
+  }
+  class FuenteNoDisponibleException <<excepción>>
+}
+
+package sarif.datos {
+  class ConexionBD <<utilidad>> {
+    + {static} obtener() : Connection
+    + {static} disponible() : boolean
+  }
+  class FocoDAO {
+    + existe(f : FocoCalor) : boolean
+    + insertar(f : FocoCalor, idSincronizacion : int) : long
+    + contarVentanaHistorica(idZona, fecha, ventana, temporadas) : int
+  }
+  class MeteoDAO {
+    + guardar(m : RegistroMeteo, origen)
+    + obtener(idZona, fecha) : Optional<RegistroMeteo>
+  }
+  class SincronizacionDAO {
+    + iniciar(tipo, origen, idUsuario) : int
+    + finalizar(id, leidos, nuevos, detalle)
+  }
+}
+
+FuenteDeDatos <|-- FuenteRemota
+FuenteDeDatos <|-- FuenteArchivo
+ServicioSincronizacion --> FuenteDeDatos : usa el tipo abstracto
+FuenteDeDatos ..> FuenteNoDisponibleException : lanza
+ServicioSincronizacion ..> FocoDAO
+ServicioSincronizacion ..> MeteoDAO
+ServicioSincronizacion ..> SincronizacionDAO
+ServicioSincronizacion ..> ConexionBD : transacción del lote
+FuenteDeDatos -[hidden]down- FocoDAO
+FuenteRemota -[hidden]down- ConexionBD
+@enduml

@@ -1,4 +1,5 @@
 @startuml
+!include estilo.puml
 ' Figura 8: Diagrama de estados de la alerta
 skinparam shadowing false
 title Ciclo de vida de la alerta

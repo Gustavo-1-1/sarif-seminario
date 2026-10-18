@@ -1,0 +1,55 @@
+@startuml
+!include estilo.puml
+left to right direction
+skinparam classAttributeIconSize 0
+title Servicios — sincronización, riesgo, alertas y zonas
+
+class ServicioSincronizacion {
+  + sincronizarFocos(...)
+  + sincronizarMeteo(...)
+  + sincronizarNdvi(...)
+  + sincronizarFwi(...)
+}
+class ServicioRiesgo {
+  + calcularIndices(fecha)
+}
+class CalculadorRiesgo {
+  + componenteHistorica(focos)
+  + componenteMeteorologica(meteo)
+  + componenteCombustible(relevamiento)
+  + valorFinal(h, m, c)
+}
+class GeneradorAlertas {
+  + evaluar(foco, zona, activos)
+  + evaluarRiesgo(zona, hoy, ayer, focos, vigente, niveles)
+}
+class ServicioAlertas {
+  + notificar(...)
+  + cambiarEstado(...)
+  + aplicarSugerencia(...)
+}
+class ServicioZonas {
+  + registrarZona(...)
+  + cambiarNivelAlerta(...)
+  + registrarActivo(...)
+}
+class Permisos <<utilidad>> {
+  + exigir(idUsuario, permiso)
+}
+interface FuenteDeDatos
+class "DAO de dominio" as dao
+
+ServicioSincronizacion --> FuenteDeDatos
+ServicioSincronizacion --> ServicioRiesgo
+ServicioSincronizacion --> GeneradorAlertas
+ServicioRiesgo --> CalculadorRiesgo
+ServicioRiesgo --> ServicioAlertas
+ServicioAlertas --> GeneradorAlertas
+ServicioAlertas --> ServicioZonas
+ServicioZonas --> Permisos
+ServicioAlertas --> Permisos
+ServicioSincronizacion ..> dao
+ServicioRiesgo ..> dao
+ServicioAlertas ..> dao
+ServicioZonas ..> dao
+@enduml
