@@ -52,7 +52,7 @@ public class FuenteFwi {
     /** El servidor corta la conexión cada tanto; reintento unas pocas veces antes de darlo por caído. */
     private static final int INTENTOS = 4;
     /** Valores fuera de este rango los trato como "sin dato" (el servicio usa sentinelas negativas). */
-    private static final double VALOR_MAXIMO = 200.0;
+    private static final double VALOR_MAXIMO = 150.0;
 
     /**
      * Cliente de descarga. Fuerzo HTTP/1.1 porque con HTTP/2 el servidor de GWIS aborta la transferencia

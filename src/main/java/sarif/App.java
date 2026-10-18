@@ -36,7 +36,7 @@ public class App extends Application {
         cambiarVista("Login.fxml", "SARIF - Ingreso", false);
     }
 
-    /** Muestra la ventana principal con las cinco pestañas, una vez que el usuario ingresó. */
+    /** Muestra la ventana principal con las pestañas que el rol del usuario permite, una vez que ingresó. */
     public static void mostrarPrincipal() throws IOException {
         cambiarVista("Principal.fxml", "SARIF - Sistema de Anticipación y Respuesta ante Incendios Forestales", true);
     }

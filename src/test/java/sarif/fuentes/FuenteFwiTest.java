@@ -85,6 +85,8 @@ class FuenteFwiTest {
 
         // Una fecha que el modelo todavía no cubre devuelve todas las celdas sin dato: no hay FWI.
         assertTrue(FuenteFwi.promedio(tiff(new float[][]{{-9999f, -9999f}, {-9999f, -9999f}})).isEmpty());
+        // El mismo límite que aplica el CHECK de registro_fwi evita intentar persistir un valor inválido.
+        assertTrue(FuenteFwi.promedio(tiff(new float[][]{{151f, 151f}})).isEmpty());
 
         // Si el WMS responde con una excepción XML en lugar del GeoTIFF, la fuente lo informa como caída.
         byte[] excepcion = "<ServiceExceptionReport><ServiceException>LayerNotDefined</ServiceException>"

@@ -2,7 +2,7 @@ package sarif.modelo;
 
 /**
  * Usuario de SARIF con su rol. A propósito no incluyo la clave ni la sal: esas quedan solo en
- * ConfiguracionDAO.Credencial, que se usa para verificar el ingreso, así el objeto que circula por la
+ * UsuarioDAO.Credencial, que se usa para verificar el ingreso, así el objeto que circula por la
  * aplicación (la sesión, la lista de usuarios) no lleva datos sensibles. El rol va como texto, igual que
  * en la base; para saber qué puede hacer uso {@link #puede(Permiso)}.
  */

@@ -477,7 +477,8 @@ CREATE TABLE alerta (
     CONSTRAINT ck_alerta_notificacion CHECK ((id_usuario_notifica IS NULL AND fecha_hora_notificacion IS NULL
                                               AND notificado_a IS NULL AND medio_notificacion IS NULL)
                                              OR (id_usuario_notifica IS NOT NULL AND fecha_hora_notificacion IS NOT NULL
-                                              AND CHAR_LENGTH(TRIM(notificado_a)) > 0 AND medio_notificacion IS NOT NULL)),
+                                              AND notificado_a IS NOT NULL AND CHAR_LENGTH(TRIM(notificado_a)) > 0
+                                              AND medio_notificacion IS NOT NULL)),
     CONSTRAINT ck_alerta_notificada CHECK ((estado = 'PENDIENTE' AND id_usuario_notifica IS NULL)
                                            OR (estado IN ('NOTIFICADA','CERRADA') AND id_usuario_notifica IS NOT NULL)
                                            OR estado = 'DESCARTADA'),

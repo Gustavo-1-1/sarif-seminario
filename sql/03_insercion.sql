@@ -41,51 +41,56 @@ FROM tipo_combustible WHERE nombre = 'Bosque de coihue y ciprés';
 
 -- I-4. Registro de la asignación decidida (CU11) y cambio de estado del recurso,
 --      como una única transacción: o se registran ambas operaciones o ninguna.
---      Asigno el Helicóptero HB-1 a Caviahue tomando el índice del 20/01 como
---      fundamento; si el INSERT o el UPDATE fallan, no quiero que quede una
---      asignación con el recurso todavía DISPONIBLE (ni al revés).
+--      Durante la jornada el prototipo ya asignó los siete recursos operativos
+--      (entre ellos el Helicóptero HB-1). La Brigada Junín, dada de alta en I-1,
+--      quedó disponible, así que la mando de refuerzo a Caviahue tomando el
+--      índice del 20/01 como fundamento. Si el INSERT o el UPDATE fallan, no
+--      quiero que quede una asignación con el recurso todavía DISPONIBLE (ni al revés).
 START TRANSACTION;
 INSERT INTO asignacion (id_recurso, id_zona, id_usuario, id_indice, fecha, observaciones)
 SELECT r.id_recurso, i.id_zona, 2, i.id_indice, i.fecha, 'Refuerzo por índice EXTREMO'
 FROM recurso r
 JOIN indice_riesgo i ON i.id_zona = 4 AND i.fecha = '2026-01-20'
-WHERE r.denominacion = 'Helicóptero HB-1';
-UPDATE recurso SET estado = 'ASIGNADO' WHERE denominacion = 'Helicóptero HB-1';
+WHERE r.denominacion = 'Brigada Junín' AND r.estado = 'DISPONIBLE';
+UPDATE recurso SET estado = 'ASIGNADO' WHERE denominacion = 'Brigada Junín';
 COMMIT;
 
 -- I-5. Cambio del nivel de alerta operativa con fundamento (CU12).
---      La jefa de guardia sube Caviahue de ATENCION a ALERTA. No toco la
---      zona: agrego una fila al historial, y el nivel vigente lo resuelve la
---      vista v_nivel_alerta_vigente.
-INSERT INTO cambio_nivel_alerta (id_zona, id_nivel_alerta, fecha_hora, fundamento, id_usuario)
-SELECT 4, id_nivel_alerta, '2026-01-20 19:10:00', 'Índice EXTREMO y foco a 2,72 km de Villa Caviahue', 2
-FROM nivel_alerta WHERE nombre = 'ALERTA';
+--      Caviahue ya pasó a ALERTA durante la jornada (Aplicar nivel sugerido).
+--      Acá la jefa de guardia sube San Martín de los Andes - Lolog (zona 1) de
+--      NORMAL a ATENCION. No toco la zona: agrego una fila al historial, y el
+--      nivel vigente lo resuelve la vista v_nivel_alerta_vigente. La fecha y la
+--      hora las pone el servidor, igual que cuando el cambio se hace desde la pantalla.
+INSERT INTO cambio_nivel_alerta (id_zona, id_nivel_alerta, fundamento, id_usuario)
+SELECT 1, id_nivel_alerta, 'Índice ALTO (73,78) y foco a 3,17 km de Barrio Lolog', 2
+FROM nivel_alerta WHERE nombre = 'ATENCION';
 
 -- I-6. Ubicación en el mapa del recurso desplegado.
---      El Helicóptero HB-1 que se asignó en I-4 opera sobre el foco de
+--      El Helicóptero HB-1 que asignó el prototipo opera sobre el foco de
 --      Caviahue. Uso INSERT ... SELECT con la condición estado = 'ASIGNADO'
 --      (igual que el prototipo): si el recurso no estuviera desplegado, no se
 --      inserta nada. La zona es la que contiene el punto.
-INSERT INTO posicion_recurso (id_recurso, id_zona, latitud, longitud, fecha_hora, observaciones, id_usuario)
-SELECT id_recurso, 4, -37.84200, -71.06000, '2026-01-20 19:20:00', 'Descargas sobre el flanco norte del foco', 2
+INSERT INTO posicion_recurso (id_recurso, id_zona, latitud, longitud, observaciones, id_usuario)
+SELECT id_recurso, 4, -37.84200, -71.06000, 'Descargas sobre el flanco norte del foco', 2
 FROM recurso WHERE denominacion = 'Helicóptero HB-1' AND estado = 'ASIGNADO';
 
--- I-7. Marcas operativas en el mapa: el puesto de comando en la villa y un
---      punto de carga de agua para el helicóptero en el lago Caviahue.
-INSERT INTO marca_mapa (tipo, descripcion, latitud, longitud, id_zona, fecha_hora, id_usuario)
-VALUES ('PUESTO_COMANDO', 'Puesto de comando en la delegación municipal', -37.87200, -71.05300, 4, '2026-01-20 19:15:00', 2),
-       ('PUNTO_AGUA', 'Carga de agua del helicóptero (lago Caviahue)', -37.86000, -71.03500, 4, '2026-01-20 19:16:00', 2);
+-- I-7. Marcas operativas en el mapa. El puesto de comando ya lo marcó la
+--      guardia desde el mapa; acá agrego un punto de carga de agua para el
+--      helicóptero en el lago Caviahue y el punto de reunión para evacuar la villa.
+INSERT INTO marca_mapa (tipo, descripcion, latitud, longitud, id_zona, id_usuario)
+VALUES ('PUNTO_AGUA', 'Carga de agua del helicóptero (lago Caviahue)', -37.86000, -71.03500, 4, 2),
+       ('EVACUACION', 'Punto de reunión para evacuar la villa', -37.87500, -71.04800, 4, 2);
 
--- I-8. Meteorología de Caviahue con el vector del viento (CU08): el dato
---      observado del 20/01 y el pronóstico del 21/01, con los valores del
---      archivo de respaldo. Viento del oesnoroeste (292°): empuja el fuego
---      hacia el estesudeste, donde está la villa. La humedad del suelo queda
---      en NULL (sin dato), igual que en el archivo.
+-- I-8. Carga manual de meteorología con el vector del viento (CU08, RFS12).
+--      El observado del 20/01 y el pronóstico del 21/01 de Caviahue ya los
+--      trajo la sincronización de la jornada (la clave única zona-fecha-tipo
+--      no admite repetirlos). Agrego el pronóstico del 22/01 que la guardia
+--      recibió por otro medio: viento del oeste (278°), que empuja el fuego
+--      hacia el este. La humedad del suelo queda en NULL (sin dato).
 INSERT INTO registro_meteo (id_zona, fecha, temperatura_max_c, humedad_min_pct, viento_max_kmh, precipitacion_mm,
                             temperatura_min_c, rafaga_max_kmh, direccion_viento_grados, prob_precipitacion_pct,
                             evapotranspiracion_mm, es_pronostico, origen)
-VALUES (4, '2026-01-20', 31.5, 15.0, 46.5, 0.0, 12.6, 73.1, 292, 1.0, 7.6, FALSE, 'ARCHIVO'),
-       (4, '2026-01-21', 29.8, 19.0, 35.5, 0.0, 12.0, 57.0, 284, 4.0, 7.0, TRUE,  'ARCHIVO');
+VALUES (4, '2026-01-22', 30.4, 18.0, 38.0, 0.0, 11.8, 61.0, 278, 3.0, 7.3, TRUE, 'MANUAL');
 
 -- Verificación de la asignación registrada.
 -- Con esta consulta compruebo que la transacción de I-4 dejó la asignación
@@ -93,7 +98,8 @@ VALUES (4, '2026-01-20', 31.5, 15.0, 46.5, 0.0, 12.6, 73.1, 292, 1.0, 7.6, FALSE
 SELECT r.denominacion, r.estado, z.nombre AS zona_asignada, a.fecha, a.observaciones
 FROM asignacion a
 JOIN recurso r USING (id_recurso)
-JOIN zona_vigilancia z ON z.id_zona = a.id_zona;
+JOIN zona_vigilancia z ON z.id_zona = a.id_zona
+WHERE r.denominacion = 'Brigada Junín';
 
 -- ---------------------------------------------------------------------
 -- 6.2 Actualización
@@ -106,7 +112,7 @@ JOIN zona_vigilancia z ON z.id_zona = a.id_zona;
 --      quién y por qué medio: el CHECK ck_alerta_notificada no deja pasar
 --      una alerta a NOTIFICADA sin esos datos.
 UPDATE alerta
-SET estado = 'NOTIFICADA', id_usuario_notifica = 2, fecha_hora_notificacion = '2026-01-20 19:05:00',
+SET estado = 'NOTIFICADA', id_usuario_notifica = 2, fecha_hora_notificacion = NOW(),
     notificado_a = 'Defensa Civil de la localidad', medio_notificacion = 'TELEFONO'
 WHERE tipo = 'ACTIVO_EN_RIESGO' AND estado = 'PENDIENTE';
 
@@ -120,5 +126,5 @@ UPDATE zona_vigilancia SET vigilancia_activa = TRUE WHERE nombre = 'Junín de lo
 --      cronología conserva la marca. El CHECK ck_marca_baja exige los dos
 --      datos juntos.
 UPDATE marca_mapa
-SET fecha_hora_baja = '2026-01-20 21:30:00', id_usuario_baja = 2
+SET fecha_hora_baja = NOW(), id_usuario_baja = 2
 WHERE tipo = 'PUNTO_AGUA' AND fecha_hora_baja IS NULL;
