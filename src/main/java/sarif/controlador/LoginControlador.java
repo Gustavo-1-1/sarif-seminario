@@ -5,6 +5,7 @@ import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
 import sarif.App;
+import sarif.datos.DatosException;
 import sarif.servicio.ServicioAutenticacion;
 import sarif.servicio.ValidacionException;
 
@@ -57,7 +58,8 @@ public class LoginControlador {
             txtClave.clear();
             txtClave.requestFocus();
         } catch (SQLException e) {
-            lblMensaje.setText("No se pudo conectar con la base de datos.");
+            // DatosException dice qué revisar: servidor detenido, clave de sarif_app incorrecta o base inexistente.
+            lblMensaje.setText(DatosException.traducir(e).getMessage());
         } catch (IOException e) {
             lblMensaje.setText("No se pudo abrir la ventana principal: " + e.getMessage());
         }

@@ -6,6 +6,7 @@ import javafx.scene.control.Dialog;
 import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
 import javafx.scene.layout.GridPane;
+import sarif.datos.DatosException;
 
 import java.sql.SQLException;
 import java.time.format.DateTimeFormatter;
@@ -39,10 +40,15 @@ final class Dialogos {
         mostrar(Alert.AlertType.WARNING, "Revise los datos", mensaje);
     }
 
-    /** Error de base de datos: muestro un texto entendible y agrego el detalle técnico debajo. */
+    /**
+     * Error de base de datos: muestro el mensaje traducido por DatosException (qué pasó y qué revisar) y,
+     * debajo, el texto original de MySQL, que sirve para el diagnóstico pero no es lo primero que hay que leer.
+     */
     static void errorBase(SQLException e) {
+        DatosException error = DatosException.traducir(e);
         mostrar(Alert.AlertType.ERROR, "Error de base de datos",
-                "No se pudo completar la operación con la base de datos.\n" + e.getMessage());
+                "No se pudo completar la operación con la base de datos.\n" + error.getMessage()
+                        + "\n\nDetalle técnico: " + error.getDetalleTecnico());
     }
 
     /**

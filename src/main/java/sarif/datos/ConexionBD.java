@@ -31,10 +31,16 @@ public final class ConexionBD {
     /**
      * Abre una conexión nueva. No uso un pool porque es una aplicación de escritorio con un solo usuario;
      * quien la pide es responsable de cerrarla (normalmente con try-with-resources en el servicio).
+     * Si no se puede conectar (servidor detenido, clave incorrecta, base inexistente), lanzo una DatosException
+     * que dice qué revisar, en lugar del mensaje del driver.
      */
     public static Connection obtener() throws SQLException {
         Properties p = propiedades();
-        return DriverManager.getConnection(p.getProperty("db.url"), p.getProperty("db.usuario"), p.getProperty("db.clave"));
+        try {
+            return DriverManager.getConnection(p.getProperty("db.url"), p.getProperty("db.usuario"), p.getProperty("db.clave"));
+        } catch (SQLException e) {
+            throw DatosException.traducir(e);
+        }
     }
 
     /** Devuelve un valor de la configuración, o el valor por defecto si no está definido. */

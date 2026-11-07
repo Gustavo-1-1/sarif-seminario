@@ -18,8 +18,9 @@
 <HBox xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1"
       fx:controller="sarif.controlador.LoginControlador" styleClass="login" prefWidth="760" prefHeight="440">
 
-    <!-- Panel de presentación: nombre del sistema y organismo, con el degradado oscuro de la marca. -->
-    <VBox styleClass="login-marca" alignment="CENTER_LEFT" spacing="10" prefWidth="340">
+    <!-- Panel de presentación: nombre del sistema y organismo, con el degradado oscuro de la marca.
+         minWidth en USE_PREF_SIZE (-Infinity) para que un mensaje de error largo no lo achique. -->
+    <VBox styleClass="login-marca" alignment="CENTER_LEFT" spacing="10" prefWidth="340" minWidth="-Infinity">
         <padding><Insets top="40" right="36" bottom="40" left="36"/></padding>
         <Label text="SARIF" styleClass="login-titulo"/>
         <Label text="Sistema de Anticipación y Respuesta ante Incendios Forestales" wrapText="true"

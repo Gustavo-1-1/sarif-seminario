@@ -9,12 +9,10 @@ import sarif.modelo.TipoEvento;
 import sarif.modelo.TipoMarca;
 
 import java.sql.Connection;
-import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -23,12 +21,10 @@ import java.util.List;
  * guardia junta en una sola consulta los hitos de las alertas, los cambios de nivel y las asignaciones.
  * Uso sentencias preparadas para las fechas del período.
  */
-public class ReporteDAO {
-
-    private final Connection cn;
+public class ReporteDAO extends DaoBase {
 
     public ReporteDAO(Connection cn) {
-        this.cn = cn;
+        super(cn);
     }
 
     /**
@@ -49,20 +45,9 @@ public class ReporteDAO {
                 + "           JOIN nivel_riesgo n ON n.id_nivel_riesgo = i.id_nivel_riesgo "
                 + "           WHERE i.fecha BETWEEN ? AND ? GROUP BY i.id_zona) i ON i.id_zona = z.id_zona "
                 + "ORDER BY COALESCE(f.focos, 0) DESC, z.nombre";
-        List<FilaReporteZona> filas = new ArrayList<>();
-        try (PreparedStatement ps = cn.prepareStatement(sql)) {
-            ps.setObject(1, desde.atStartOfDay());
-            ps.setObject(2, hasta.plusDays(1).atStartOfDay());
-            ps.setObject(3, desde);
-            ps.setObject(4, hasta);
-            try (ResultSet rs = ps.executeQuery()) {
-                while (rs.next()) {
-                    filas.add(new FilaReporteZona(rs.getString(1), rs.getInt(2), rs.getInt(3), redondear(rs, 4, 1),
-                            rs.getInt(5), redondear(rs, 6, 2), redondear(rs, 7, 2), rs.getInt(8)));
-                }
-            }
-        }
-        return filas;
+        return consultar(sql, rs -> new FilaReporteZona(rs.getString(1), rs.getInt(2), rs.getInt(3), redondear(rs, 4, 1),
+                        rs.getInt(5), redondear(rs, 6, 2), redondear(rs, 7, 2), rs.getInt(8)),
+                desde.atStartOfDay(), hasta.plusDays(1).atStartOfDay(), desde, hasta);
     }
 
     /**
@@ -78,19 +63,34 @@ public class ReporteDAO {
                 + "           WHERE fecha_hora_utc >= ? AND fecha_hora_utc < ? "
                 + "           GROUP BY id_zona, DATE(fecha_hora_utc)) f ON f.id_zona = i.id_zona AND f.dia = i.fecha "
                 + "GROUP BY n.id_nivel_riesgo, n.nombre, n.orden ORDER BY n.orden";
-        List<FilaDesempeno> filas = new ArrayList<>();
-        try (PreparedStatement ps = cn.prepareStatement(sql)) {
-            ps.setObject(1, desde);
-            ps.setObject(2, hasta);
-            ps.setObject(3, desde.atStartOfDay());
-            ps.setObject(4, hasta.plusDays(1).atStartOfDay());
-            try (ResultSet rs = ps.executeQuery()) {
-                while (rs.next()) {
-                    filas.add(new FilaDesempeno(rs.getString(1), rs.getInt(2), rs.getInt(3), rs.getInt(4)));
-                }
-            }
+        return consultar(sql, rs -> new FilaDesempeno(rs.getString(1), rs.getInt(2), rs.getInt(3), rs.getInt(4)),
+                desde, hasta, desde.atStartOfDay(), hasta.plusDays(1).atStartOfDay());
+    }
+
+    /**
+     * Estacionalidad de los focos: cuántos focos se registraron en cada mes del año, sumando todas las temporadas
+     * cargadas (el histórico 2020-2025 más lo sincronizado). La base agrupa con GROUP BY y devuelve una fila por
+     * cada mes que tuvo focos, en una lista de largo variable; yo la vuelco en un arreglo de 12 posiciones, una
+     * por mes, que conserva también los meses sin focos (los que el GROUP BY no devuelve) con valor 0.
+     *
+     * @param idZona 0 para todas las zonas
+     * @return arreglo de 12 posiciones: [0] enero, [1] febrero, ..., [11] diciembre
+     */
+    public int[] focosPorMes(int idZona) throws SQLException {
+        List<int[]> filas = consultar("SELECT MONTH(fecha_hora_utc), COUNT(*) FROM foco_calor "
+                        + "WHERE (? = 0 OR id_zona = ?) GROUP BY MONTH(fecha_hora_utc)",
+                rs -> new int[]{rs.getInt(1), rs.getInt(2)}, idZona, idZona);
+        int[] porMes = new int[12];
+        for (int[] fila : filas) {
+            porMes[fila[0] - 1] = fila[1];
         }
-        return filas;
+        return porMes;
+    }
+
+    /** Cantidad de años distintos con focos registrados, para expresar la estacionalidad como promedio anual. */
+    public int aniosConFocos(int idZona) throws SQLException {
+        return entero("SELECT COUNT(DISTINCT YEAR(fecha_hora_utc)) FROM foco_calor WHERE (? = 0 OR id_zona = ?)",
+                idZona, idZona);
     }
 
     // Zona de una alerta: sale del foco, del índice o del cambio de nivel, igual que en el listado de alertas.
@@ -166,19 +166,7 @@ public class ReporteDAO {
                 + "ORDER BY e.momento, FIELD(e.evento, 'CAMBIO_NIVEL', 'ALERTA_GENERADA', 'ALERTA_NOTIFICADA', "
                 + "'ASIGNACION', 'RECURSO_UBICADO', 'MARCA_AGREGADA', 'MARCA_QUITADA', 'ALERTA_CERRADA', 'ALERTA_DESCARTADA'), "
                 + "e.id_alerta";
-        List<EventoGuardia> eventos = new ArrayList<>();
-        try (PreparedStatement ps = cn.prepareStatement(sql)) {
-            ps.setObject(1, desde.atStartOfDay());
-            ps.setObject(2, hasta.plusDays(1).atStartOfDay());
-            ps.setInt(3, idZona);
-            ps.setInt(4, idZona);
-            try (ResultSet rs = ps.executeQuery()) {
-                while (rs.next()) {
-                    eventos.add(leerEvento(rs));
-                }
-            }
-        }
-        return eventos;
+        return consultar(sql, ReporteDAO::leerEvento, desde.atStartOfDay(), hasta.plusDays(1).atStartOfDay(), idZona, idZona);
     }
 
     // Armo el texto del hito según su tipo; los nombres técnicos (tipo de alerta, medio) los paso a texto legible.
