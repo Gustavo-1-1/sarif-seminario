@@ -2,6 +2,7 @@ package sarif.servicio;
 
 import sarif.modelo.EventoGuardia;
 import sarif.modelo.FilaDesempeno;
+import sarif.modelo.FilaMes;
 import sarif.modelo.FilaReporteZona;
 import sarif.modelo.ResumenGuardia;
 
@@ -20,7 +21,8 @@ public final class ReporteHtml {
 
     /** Todo lo que va en el reporte; lo junta el controlador con lo que ya muestra en pantalla. */
     public record Datos(LocalDate desde, LocalDate hasta, String zona, String usuario, List<EventoGuardia> eventos,
-                        ResumenGuardia resumen, List<FilaReporteZona> zonas, List<FilaDesempeno> desempeno) {
+                        ResumenGuardia resumen, List<FilaReporteZona> zonas, List<FilaDesempeno> desempeno,
+                        List<FilaMes> meses, String temporada) {
     }
 
     private static final DateTimeFormatter FECHA = DateTimeFormatter.ofPattern("dd/MM/yyyy");
@@ -38,6 +40,7 @@ public final class ReporteHtml {
                 .append(".dato{color:#546e7a}table{border-collapse:collapse;width:100%;font-size:13px}")
                 .append("th,td{border:1px solid #cfd8dc;padding:4px 6px;text-align:left;vertical-align:top}")
                 .append("th{background:#eceff1}.resumen td{border:none;padding:2px 12px 2px 0}")
+                .append(".critica td{background:#ffebee;font-weight:600}")
                 .append("@media print{body{margin:0}}\n</style>\n</head>\n<body>\n");
 
         h.append("<h1>SARIF - Reporte de la guardia</h1>\n<p class=\"dato\">Período: ")
@@ -95,7 +98,19 @@ public final class ReporteHtml {
                     .append("</td><td>").append(f.diasConFocos()).append("</td><td>").append(numero(f.porcentajeConFocos()))
                     .append("</td><td>").append(f.focos()).append("</td></tr>\n");
         }
-        h.append("</table>\n</body>\n</html>\n");
+        h.append("</table>\n");
+
+        if (!d.meses().isEmpty()) {
+            h.append("<h2>Estacionalidad de focos</h2>\n<p>").append(texto(d.temporada())).append("</p>\n")
+                    .append("<table>\n<tr><th>Mes</th><th>Focos</th><th>Promedio por año</th><th>% del total</th></tr>\n");
+            for (FilaMes m : d.meses()) {
+                h.append(m.temporadaCritica() ? "<tr class=\"critica\"><td>" : "<tr><td>").append(m.mes())
+                        .append("</td><td>").append(m.focos()).append("</td><td>").append(numero(m.promedioAnual()))
+                        .append("</td><td>").append(numero(m.porcentaje())).append("</td></tr>\n");
+            }
+            h.append("</table>\n");
+        }
+        h.append("</body>\n</html>\n");
         return h.toString();
     }
 

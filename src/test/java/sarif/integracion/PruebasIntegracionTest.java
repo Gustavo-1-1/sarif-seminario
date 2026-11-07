@@ -9,6 +9,7 @@ import org.junit.jupiter.api.TestMethodOrder;
 import sarif.datos.AlertaDAO;
 import sarif.datos.ConexionBD;
 import sarif.datos.ConfiguracionDAO;
+import sarif.datos.DatosException;
 import sarif.datos.FocoDAO;
 import sarif.datos.IndiceDAO;
 import sarif.datos.RecursoDAO;
@@ -44,6 +45,7 @@ import sarif.modelo.TipoRecurso;
 import sarif.modelo.Usuario;
 import sarif.modelo.Vertice;
 import sarif.modelo.Zona;
+import sarif.servicio.Estacionalidad;
 import sarif.servicio.ServicioAlertas;
 import sarif.servicio.ServicioAutenticacion;
 import sarif.servicio.ServicioDespliegue;
@@ -663,5 +665,53 @@ class PruebasIntegracionTest {
         assertTrue(caviahue.stream().filter(e -> e.tipo() == TipoEvento.RECURSO_UBICADO).allMatch(e -> e.nivelAlerta() != null));
         assertEquals(2, caviahue.stream().filter(e -> e.tipo() == TipoEvento.RECURSO_UBICADO).count());
         assertTrue(caviahue.stream().noneMatch(e -> e.tipo() == TipoEvento.MARCA_AGREGADA));
+    }
+
+    @Test
+    @Order(15)
+    @DisplayName("PI-15 Persistencia: MySQL rechaza un nombre duplicado y un borrado con dependientes; DatosException lo traduce")
+    void erroresDeMySqlTraducidos() throws Exception {
+        try (Connection cn = ConexionBD.obtener()) {
+            ZonaDAO zonas = new ZonaDAO(cn);
+            int antes = zonas.contar();
+            // Voy directo al DAO, sin el control previo del servicio, para que sea MySQL el que rechace el nombre.
+            Zona repetida = new Zona(0, "Aluminé - Lanín Norte", "Duplicada a propósito", -50.0, -49.9, -60.0, -59.9, false);
+            DatosException duplicada = assertThrows(DatosException.class, () -> zonas.insertar(repetida));
+            assertEquals(1062, duplicada.getErrorCode());
+            assertTrue(duplicada.getMessage().startsWith("Ya existe un registro con esos datos"), duplicada.getMessage());
+            assertTrue(duplicada.getDetalleTecnico().contains("Duplicate entry"), duplicada.getDetalleTecnico());
+            assertEquals(antes, zonas.contar());
+
+            // Caviahue tiene focos, índices y activos: la clave foránea con RESTRICT impide borrarla. Con los
+            // permisos de sarif_app, MySQL informa el código corto 1217 en lugar de 1451.
+            DatosException conDependientes = assertThrows(DatosException.class, () -> zonas.eliminar(4));
+            assertTrue(List.of(1451, 1217).contains(conDependientes.getErrorCode()), "Código " + conDependientes.getErrorCode());
+            assertTrue(conDependientes.getMessage().startsWith("No se puede borrar"));
+            assertTrue(zonas.listar().stream().anyMatch(z -> z.getId() == 4));
+        }
+    }
+
+    @Test
+    @Order(16)
+    @DisplayName("PI-16 Estacionalidad: focos por mes desde la base, en un arreglo de 12 meses, y temporada crítica")
+    void estacionalidad() throws Exception {
+        Estacionalidad todas = new ServicioReportes().estacionalidad(0);
+        int focos;
+        try (Connection cn = ConexionBD.obtener()) {
+            focos = new FocoDAO(cn).contar();
+        }
+        // La suma de los 12 meses es el total de focos de la base, y de abril a octubre no hay ninguno.
+        assertEquals(focos, todas.total());
+        for (int mes = 4; mes <= 10; mes++) {
+            assertEquals(0, todas.focos(mes), "Mes " + mes);
+        }
+        // El histórico va de 2020 a 2025 y la jornada de prueba es de 2026.
+        assertEquals(7, todas.anios());
+        // La temporada crítica de tres meses incluye enero (empieza en noviembre, diciembre o enero).
+        assertTrue(List.of(11, 12, 1).contains(todas.inicioTemporadaCritica(3)));
+        // Filtrando por una zona, el total es menor o igual y los meses siguen siendo 12.
+        Estacionalidad caviahue = new ServicioReportes().estacionalidad(4);
+        assertTrue(caviahue.total() > 0 && caviahue.total() <= todas.total());
+        assertEquals(12, caviahue.filas(3).size());
     }
 }

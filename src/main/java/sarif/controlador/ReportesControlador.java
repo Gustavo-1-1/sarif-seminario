@@ -4,20 +4,25 @@ import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
+import javafx.scene.chart.BarChart;
+import javafx.scene.chart.XYChart;
 import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.DatePicker;
 import javafx.scene.control.Label;
 import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
+import javafx.scene.control.TableRow;
 import javafx.scene.control.TableView;
 import javafx.scene.control.Tooltip;
 import javafx.stage.FileChooser;
 import sarif.modelo.EventoGuardia;
 import sarif.modelo.FilaDesempeno;
+import sarif.modelo.FilaMes;
 import sarif.modelo.FilaReporteZona;
 import sarif.modelo.ResumenGuardia;
 import sarif.modelo.Zona;
+import sarif.servicio.Estacionalidad;
 import sarif.servicio.ReporteHtml;
 import sarif.servicio.ServicioReportes;
 import sarif.servicio.ServicioZonas;
@@ -35,8 +40,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Controlador de la pestaña "Reportes" (CU13): la cronología de la guardia, el histórico por zona (RFS18)
- * y el desempeño del índice (RFS19). El período arranca, por defecto, en el inicio de la temporada de la
+ * Controlador de la pestaña "Reportes" (CU13): la cronología de la guardia, el histórico por zona (RFS18),
+ * el desempeño del índice (RFS19) y la estacionalidad de los focos por mes, con la temporada crítica marcada
+ * en rojo en el gráfico y en la tabla. El período arranca, por defecto, en el inicio de la temporada de la
  * fecha de trabajo. "Exportar HTML..." guarda en un archivo exactamente lo que se generó en pantalla.
  */
 public class ReportesControlador {
@@ -101,8 +107,24 @@ public class ReportesControlador {
     private TableColumn<FilaDesempeno, Integer> colFocosNivel;
     @FXML
     private Label lblConclusion;
+    @FXML
+    private BarChart<String, Number> graficoMeses;
+    @FXML
+    private TableView<FilaMes> tablaMeses;
+    @FXML
+    private TableColumn<FilaMes, String> colMes;
+    @FXML
+    private TableColumn<FilaMes, Integer> colFocosMes;
+    @FXML
+    private TableColumn<FilaMes, Double> colPromedioMes;
+    @FXML
+    private TableColumn<FilaMes, Double> colPorcentajeMes;
+    @FXML
+    private Label lblTemporada;
 
     private static final DateTimeFormatter HORA = DateTimeFormatter.ofPattern("HH:mm");
+    // Largo de la temporada crítica que busco en la estacionalidad: los tres meses seguidos con más focos.
+    private static final int MESES_TEMPORADA = 3;
     // Opción "todas" del combo de zonas: una zona ficticia con id 0, que el servicio interpreta como sin filtro.
     private static final Zona TODAS = new Zona(0, "Todas las zonas", null, 0, 0, 0, 0, true);
 
@@ -153,6 +175,23 @@ public class ReportesControlador {
         colPorcentaje.setCellValueFactory(c -> new SimpleObjectProperty<>(c.getValue().porcentajeConFocos()));
         colFocosNivel.setCellValueFactory(c -> new SimpleObjectProperty<>(c.getValue().focos()));
         tablaDesempeno.setPlaceholder(new Label("Sin datos para el período."));
+
+        colMes.setCellValueFactory(c -> new SimpleStringProperty(c.getValue().mes()));
+        colFocosMes.setCellValueFactory(c -> new SimpleObjectProperty<>(c.getValue().focos()));
+        colPromedioMes.setCellValueFactory(c -> new SimpleObjectProperty<>(c.getValue().promedioAnual()));
+        colPorcentajeMes.setCellValueFactory(c -> new SimpleObjectProperty<>(c.getValue().porcentaje()));
+        // Resalto los meses de la temporada crítica. Las filas se reciclan al hacer scroll: siempre saco la clase antes.
+        tablaMeses.setRowFactory(t -> new TableRow<>() {
+            @Override
+            protected void updateItem(FilaMes fila, boolean vacia) {
+                super.updateItem(fila, vacia);
+                getStyleClass().remove("fila-critica");
+                if (!vacia && fila != null && fila.temporadaCritica()) {
+                    getStyleClass().add("fila-critica");
+                }
+            }
+        });
+        tablaMeses.setPlaceholder(new Label("Sin focos registrados."));
         btnExportar.setDisable(true);
     }
 
@@ -208,11 +247,15 @@ public class ReportesControlador {
             }
             lblResumen.setText(textoResumen(resumen));
             lblConclusion.setText(conclusion(desempeno));
+            Estacionalidad estacionalidad = servicio.estacionalidad(zona.getId());
+            mostrarEstacionalidad(estacionalidad);
             lblGenerado.setText("Reporte generado a las " + LocalDateTime.now().format(HORA) + ": " + eventos.size()
                     + " hitos (" + zona.getNombre() + ") entre el " + desde.format(Dialogos.FECHA)
-                    + " y el " + hasta.format(Dialogos.FECHA) + ". El filtro de zona se aplica a la cronología.");
+                    + " y el " + hasta.format(Dialogos.FECHA) + ". El filtro de zona se aplica a la cronología "
+                    + "y a la estacionalidad.");
             ultimo = new ReporteHtml.Datos(desde, hasta, zona.getNombre(), Sesion.getUsuario().nombreCompleto(),
-                    eventos, resumen, zonas, desempeno);
+                    eventos, resumen, zonas, desempeno, estacionalidad.filas(MESES_TEMPORADA),
+                    estacionalidad.resumen(MESES_TEMPORADA));
             btnExportar.setDisable(false);
         } catch (ValidacionException e) {
             Dialogos.aviso(e.getMessage());
@@ -248,6 +291,27 @@ public class ReportesControlador {
         if (Dialogos.confirmar("Reporte guardado en:\n" + archivo + "\n\n¿Abrirlo en el navegador?")) {
             abrir(archivo);
         }
+    }
+
+    /**
+     * Cargo la tabla y el gráfico de barras con los doce meses. Las barras de la temporada crítica llevan la
+     * clase barra-critica (en rojo); la agrego después de sumar la serie al gráfico, porque al crear cada barra
+     * JavaFX le reemplaza todas las clases de estilo.
+     */
+    private void mostrarEstacionalidad(Estacionalidad estacionalidad) {
+        List<FilaMes> filas = estacionalidad.filas(MESES_TEMPORADA);
+        tablaMeses.setItems(FXCollections.observableArrayList(filas));
+        XYChart.Series<String, Number> serie = new XYChart.Series<>();
+        for (FilaMes fila : filas) {
+            serie.getData().add(new XYChart.Data<>(fila.mes().substring(0, 3), fila.focos()));
+        }
+        graficoMeses.getData().setAll(List.of(serie));
+        for (int i = 0; i < filas.size(); i++) {
+            if (filas.get(i).temporadaCritica()) {
+                serie.getData().get(i).getNode().getStyleClass().add("barra-critica");
+            }
+        }
+        lblTemporada.setText(estacionalidad.resumen(MESES_TEMPORADA));
     }
 
     // Abro el archivo con el programa predeterminado del sistema en otro hilo, para no trabar la pantalla.

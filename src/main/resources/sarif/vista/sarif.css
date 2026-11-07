@@ -162,6 +162,15 @@
     -fx-background-color: -fx-selection-bar;
 }
 
+/* Gráfico de estacionalidad: barras en el verde de SARIF y los meses de la temporada crítica en rojo. */
+.grafico-meses .chart-bar {
+    -fx-bar-fill: #1b6e62;
+}
+
+.grafico-meses .chart-bar.barra-critica {
+    -fx-bar-fill: #c62828;
+}
+
 /* Registro de sincronización en fuente monoespaciada, para que las líneas con hora queden alineadas. */
 .registro {
     -fx-font-family: "Consolas", monospace;

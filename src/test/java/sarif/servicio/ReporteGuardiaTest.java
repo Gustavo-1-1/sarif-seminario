@@ -3,6 +3,7 @@ package sarif.servicio;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import sarif.modelo.EventoGuardia;
+import sarif.modelo.FilaMes;
 import sarif.modelo.ResumenGuardia;
 import sarif.modelo.TipoEvento;
 
@@ -29,7 +30,7 @@ class ReporteGuardiaTest {
     }
 
     @Test
-    @DisplayName("PU-32 Reporte de la guardia: resumen con tiempo de aviso, duraciones y HTML con los hitos escapados")
+    @DisplayName("PU-32 Reporte de la guardia: resumen con tiempo de aviso, duraciones y HTML con los hitos escapados y la estacionalidad")
     void reporteGuardia() {
         List<EventoGuardia> eventos = List.of(
                 evento(TipoEvento.ALERTA_GENERADA, 0, null, "#1 Activo en riesgo: foco a 2,72 km"),
@@ -63,16 +64,23 @@ class ReporteGuardiaTest {
 
         // HTML: título, período, cada hito y los textos del operador escapados (no se cuela una etiqueta).
         String html = ReporteHtml.armar(new ReporteHtml.Datos(LocalDate.of(2026, 1, 20), LocalDate.of(2026, 1, 21),
-                "Todas las zonas", "Marcela Ruiz", eventos, r, List.of(), List.of()), T);
+                "Todas las zonas", "Marcela Ruiz", eventos, r, List.of(), List.of(),
+                List.of(new FilaMes("Enero", 89, 14.8, 24.7, true), new FilaMes("Abril", 0, 0, 0, false)),
+                "Temporada crítica: Noviembre a enero"), T);
         assertTrue(html.startsWith("<!DOCTYPE html>"));
         assertTrue(html.contains("Período: 20/01/2026 al 21/01/2026"));
         assertTrue(html.contains("20/01/2026 18:12"));
         assertTrue(html.contains("Defensa Civil &lt;Caviahue&gt; &amp; bomberos"));
         assertFalse(html.contains("<Caviahue>"));
         assertTrue(html.contains("5 h 00 min"));
+        // Estacionalidad: la frase de la temporada y el mes crítico resaltado; el mes sin focos va sin resaltar.
+        assertTrue(html.contains("Temporada crítica: Noviembre a enero"));
+        assertTrue(html.contains("<tr class=\"critica\"><td>Enero</td><td>89</td><td>14,80</td>"));
+        assertTrue(html.contains("<tr><td>Abril</td><td>0</td>"));
         // Sin hitos, lo dice en vez de dejar una tabla vacía.
         String sinHitos = ReporteHtml.armar(new ReporteHtml.Datos(LocalDate.of(2026, 1, 20), LocalDate.of(2026, 1, 21),
-                "Todas las zonas", "Marcela Ruiz", List.of(), vacio, List.of(), List.of()), T);
+                "Todas las zonas", "Marcela Ruiz", List.of(), vacio, List.of(), List.of(), List.of(), ""), T);
         assertTrue(sinHitos.contains("No hay hitos registrados en el período."));
+        assertFalse(sinHitos.contains("Estacionalidad de focos"));
     }
 }

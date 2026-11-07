@@ -54,6 +54,19 @@ public class ServicioReportes {
     }
 
     /**
+     * Estacionalidad de los focos de la zona, sumando todas las temporadas registradas. No depende del período
+     * elegido en pantalla: para ver en qué meses se concentran los focos hacen falta varios años de datos.
+     *
+     * @param idZona 0 para todas las zonas
+     */
+    public Estacionalidad estacionalidad(int idZona) throws SQLException {
+        try (Connection cn = ConexionBD.obtener()) {
+            ReporteDAO dao = new ReporteDAO(cn);
+            return new Estacionalidad(dao.focosPorMes(idZona), dao.aniosConFocos(idZona));
+        }
+    }
+
+    /**
      * Cuento los hitos por tipo y calculo el tiempo de aviso: los minutos entre que el sistema generó cada
      * alerta y que alguien la notificó. Lo hago en memoria sobre la cronología ya leída; es estático para
      * probarlo con JUnit sin base.
