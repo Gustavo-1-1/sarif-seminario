@@ -1,6 +1,7 @@
 ﻿# SARIF — Sistema de Anticipación y Respuesta ante Incendios Forestales
 
-Prototipo operacional de la Actividad Práctica 2 del Seminario de Práctica.
+Prototipo operacional del Seminario de Práctica, versión de la Actividad Práctica 4
+(patrón de diseño, persistencia JDBC en MySQL, manejo de excepciones, arreglos y colecciones).
 Alumno: Ángel Gustavo Soto — 2026.
 
 SARIF es un sistema de escritorio de soporte a la decisión para el Consorcio Intermunicipal
@@ -28,7 +29,7 @@ datos/             archivos CSV con el formato de FIRMS y Open-Meteo (modo sin c
 src/main/java/sarif/
     App.java       punto de entrada JavaFX
     modelo/        clases de entidad
-    datos/         ConexionBD y DAO (JDBC)
+    datos/         ConexionBD, DaoBase, MapeadorFila, DatosException y los DAO (JDBC puro)
     fuentes/       FuenteDeDatos, FuenteRemota, FuenteArchivo y lectores CSV
     servicio/      lógica de los casos de uso
     controlador/   controladores JavaFX
@@ -78,7 +79,7 @@ evidencias/        resultado de las pruebas
    Si no está en el archivo, SARIF la busca en el parámetro `firms_clave` de la base.
 
 4. Ejecutar la aplicación:
-   - desde la terminal: `mvn javafx:run`
+   - desde la terminal: `mvn compile javafx:run` (`javafx:run` solo no compila: ejecuta lo último compilado)
    - desde IntelliJ IDEA: importar el `pom.xml` y ejecutar la clase `sarif.Lanzador`
      (lanza `sarif.App` sin necesidad de configurar el module-path de JavaFX).
 
@@ -176,8 +177,12 @@ quién lo registró:
   como "Fuera de las zonas" y no aparecen al filtrar por una zona).
 
 Arriba muestra el resumen: cuántas alertas, notificaciones, cierres, cambios de nivel y
-asignaciones hubo, y el tiempo de aviso promedio y máximo. La otra solapa tiene el histórico de
-focos e índices por zona y el desempeño del índice. "Exportar HTML..." guarda todo el reporte en
+asignaciones hubo, y el tiempo de aviso promedio y máximo. La segunda solapa tiene el histórico de
+focos e índices por zona y el desempeño del índice. La tercera, **Estacionalidad de focos**, cuenta
+los focos de todo el histórico por mes (un arreglo de 12 posiciones), muestra el promedio por año y
+el porcentaje de cada mes, y marca en rojo la temporada crítica: los tres meses consecutivos con más
+focos, buscados como ventana circular para que la temporada pueda cruzar el fin de año (por ejemplo,
+noviembre a enero). "Exportar HTML..." guarda todo el reporte en
 un archivo que se abre en el navegador, desde donde se puede imprimir o guardar como PDF.
 
 Como los hitos se registran con la hora real, el período propuesto termina en la fecha de trabajo
@@ -315,7 +320,7 @@ se sumarían los dispositivos si se implementara el RC07.
 ## Pruebas
 
 ```
-./ejecutar_pruebas.sh        # recrea la base, compila y ejecuta las 54 pruebas
+./ejecutar_pruebas.sh        # recrea la base, compila y ejecuta las 58 pruebas
 mvn test                     # solo las pruebas (las de integración requieren la base creada)
 ```
 

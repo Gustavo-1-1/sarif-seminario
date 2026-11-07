@@ -1,0 +1,67 @@
+@startuml
+!include estilo.puml
+!pragma layout smetana
+' Figura AP4-2: paquete de persistencia (DAO + Template Method)
+skinparam classAttributeIconSize 0
+skinparam packageStyle rectangle
+set separator none
+title Paquete sarif.datos: persistencia JDBC en MySQL
+
+class "java.sql.SQLException" as SQLException
+interface "java.sql.Connection" as Connection
+
+package sarif.datos {
+  class ConexionBD <<final>> {
+    {static} + obtener() : Connection
+  }
+
+  interface MapeadorFila<T> <<functional>> {
+    + mapear(rs : ResultSet) : T
+  }
+
+  abstract class DaoBase {
+    # cn : Connection
+    # consultar(sql, mapeador, parametros : Object...) : List<T>
+    # consultarUno(sql, mapeador, parametros : Object...) : Optional<T>
+    # entero(sql, parametros : Object...) : int
+    # existe(sql, parametros : Object...) : boolean
+    # actualizar(sql, parametros : Object...) : int
+    # insertarConClave(sql, parametros : Object...) : long
+    # lote(sql, filas : List<Object[]>) : int[]
+    - {static} cargar(ps, parametros : Object[])
+  }
+
+  class DatosException {
+    - {static} CODIGOS : int[]
+    - {static} MENSAJES : String[]
+    + {static} traducir(e : SQLException) : DatosException
+    + getDetalleTecnico() : String
+  }
+
+  class ZonaDAO {
+    + insertar(z : Zona) : int
+    + listar() : List<Zona>
+    + eliminar(idZona : int)
+  }
+  class ReporteDAO {
+    + focosPorMes(idZona : int) : int[]
+    + aniosConFocos(idZona : int) : int
+  }
+  class "Los otros 12 DAO" as Otros {
+    FocoDAO, AlertaDAO, UsuarioDAO,
+    IndiceDAO, MeteoDAO, FwiDAO, NdviDAO,
+    RecursoDAO, RelevamientoDAO, UbicacionDAO,
+    SincronizacionDAO, ConfiguracionDAO
+  }
+}
+
+DaoBase <|-- ZonaDAO
+DaoBase <|-- ReporteDAO
+DaoBase <|-- Otros
+DaoBase ..> MapeadorFila : usa
+DaoBase ..> DatosException : lanza
+DaoBase o-- Connection
+ConexionBD ..> Connection : crea
+ConexionBD ..> DatosException : lanza
+SQLException <|-- DatosException
+@enduml

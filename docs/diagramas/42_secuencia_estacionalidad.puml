@@ -1,0 +1,41 @@
+@startuml
+!include estilo.puml
+' Figura AP4-3: consulta de la estacionalidad (de MySQL a la interfaz)
+skinparam shadowing false
+autonumber
+title Reportes: estacionalidad de focos (consulta y presentación)
+
+actor "Jefa de guardia" as us
+participant ":ReportesControlador" as ctl
+participant ":ServicioReportes" as srv
+participant ":ReporteDAO\n(DaoBase)" as dao
+database "MySQL" as bd
+participant ":Estacionalidad" as est
+
+us -> ctl : Generar (zona)
+ctl -> srv : estacionalidad(idZona)
+srv -> srv : ConexionBD.obtener()
+srv -> dao : focosPorMes(idZona)
+dao -> bd : SELECT MONTH(fecha_hora_utc), COUNT(*)\nFROM foco_calor ... GROUP BY mes
+bd --> dao : solo los meses con focos
+dao -> dao : List<int[]> -> int[12]\n(los meses sin focos quedan en 0)
+dao --> srv : int[12]
+srv -> dao : aniosConFocos(idZona)
+dao -> bd : SELECT COUNT(DISTINCT YEAR(...))
+dao --> srv : años
+srv -> est ** : new Estacionalidad(focosPorMes, años)
+note right : valida 12 meses y valores\nno negativos; copia el arreglo
+srv --> ctl : estacionalidad
+ctl -> est : filas(3)
+est -> est : inicioTemporadaCritica(3)\nventana circular con % 12
+est --> ctl : List<FilaMes> (12 filas)
+ctl -> ctl : BarChart: barras rojas en la temporada\nTableView: filas con estilo fila-critica
+ctl -> est : resumen(3)
+ctl --> us : gráfico, tabla y texto de la temporada crítica
+
+group excepción: SQLException en cualquier paso
+  dao -->> srv : DatosException (traducida)
+  srv -->> ctl : DatosException
+  ctl -> ctl : Dialogos.errorBase(e)
+end
+@enduml

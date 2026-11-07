@@ -14,11 +14,11 @@
     <!-- Coordenadas del proyecto: grupo, nombre del artefacto y versión del prototipo -->
     <groupId>ar.edu.seminario</groupId>
     <artifactId>sarif</artifactId>
-    <version>0.2.0</version>
+    <version>0.4.0</version>
     <packaging>jar</packaging>
 
     <name>SARIF</name>
-    <description>Sistema de Anticipación y Respuesta ante Incendios Forestales (prototipo AP2)</description>
+    <description>Sistema de Anticipación y Respuesta ante Incendios Forestales (prototipo AP4)</description>
 
     <!--
         Propiedades comunes. Fijo la codificación en UTF-8 para que las tildes y

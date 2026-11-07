@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
-# Recrea la base de datos, compila el proyecto y ejecuta las 54 pruebas automatizadas.
+# Recrea la base de datos, compila el proyecto y ejecuta las 58 pruebas automatizadas.
 # El resultado queda en evidencias/resultado_pruebas.txt.
 #
 # Uso:  ./ejecutar_pruebas.sh [usuario_administrador_mysql]     (por defecto, root)
 #
 # Armé este script para que las pruebas se puedan repetir siempre desde el
-# mismo punto de partida: las de integración (PI-01 a PI-10) necesitan una base
+# mismo punto de partida: las de integración (PI-01 a PI-16) necesitan una base
 # recién creada, porque verifican cantidades exactas de la jornada de prueba.
 # Si querés correrlas, ejecutá este script con un usuario administrador de
 # MySQL; te va a pedir su clave una sola vez.

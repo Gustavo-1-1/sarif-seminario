@@ -1,0 +1,50 @@
+@startuml
+!include estilo.puml
+' Figura AP4-1: patrones de diseño ubicados sobre la arquitectura en capas
+skinparam packageStyle rectangle
+skinparam shadowing false
+title Patrones de diseño sobre la arquitectura en capas (AP4)
+
+package "Vista (FXML + CSS)" as vista
+package "sarif.controlador" as controlador
+package "sarif.servicio" as servicio
+package "sarif.fuentes" as fuentes
+package "sarif.datos" as datos
+package "sarif.modelo" as modelo
+database "MySQL 8.0" as bd
+cloud "FIRMS / Open-Meteo" as web
+folder "datos/*.csv" as csv
+
+vista ..> controlador : fx:controller
+controlador --> servicio
+servicio --> datos
+servicio --> fuentes
+datos --> bd : JDBC
+fuentes --> web : HTTPS
+fuentes --> csv : lectura de archivos
+controlador ..> modelo
+servicio ..> modelo
+datos ..> modelo
+
+note right of controlador
+  **MVC**: el controlador recibe el evento
+  de la vista, llama al servicio y muestra
+  el resultado; no conoce SQL.
+end note
+note right of servicio
+  Cada servicio abre la conexión y decide
+  la transacción (commit / rollback).
+end note
+note right of datos
+  **DAO + Template Method** (patrón elegido)
+  DaoBase fija el recorrido JDBC;
+  cada DAO aporta SQL, parámetros y
+  un MapeadorFila. DatosException
+  traduce los errores de MySQL.
+end note
+note left of fuentes
+  **Strategy**: FuenteDeDatos con
+  FuenteRemota y FuenteArchivo
+  (misma interfaz, origen distinto).
+end note
+@enduml

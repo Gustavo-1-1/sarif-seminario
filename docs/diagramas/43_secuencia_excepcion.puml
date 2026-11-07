@@ -1,0 +1,48 @@
+@startuml
+!include estilo.puml
+' Figura AP4-4: recorrido de un error de MySQL desde el driver hasta el operador
+skinparam shadowing false
+autonumber
+title Manejo de excepciones de MySQL (alta de zona)
+
+actor "Operador" as op
+participant ":ZonasControlador" as ctl
+participant ":ServicioZonas" as srv
+participant "ConexionBD" as cx
+participant ":ZonaDAO\n(DaoBase)" as dao
+participant "DatosException" as ex
+database "MySQL" as bd
+
+op -> ctl : Guardar zona
+ctl -> srv : registrarZona(...)
+srv -> cx : obtener()
+alt servidor detenido
+  cx -> bd : DriverManager.getConnection(...)
+  bd -->> cx : SQLException (SQLState 08001 / 08S01)
+  cx -> ex : traducir(e)
+  ex --> cx : "No se pudo conectar con el servidor MySQL..."
+  cx -->> srv : DatosException
+  srv -->> ctl : DatosException
+else conexión correcta
+  srv -> bd : setAutoCommit(false)
+  srv -> dao : insertar(zona)
+  dao -> bd : INSERT ... (PreparedStatement con "?")
+  alt MySQL rechaza (1062 nombre repetido, 1406 dato largo, 3819 rango...)
+    bd -->> dao : SQLException (código de MySQL)
+    dao -> ex : traducir(e)
+    note right : busca el código en CODIGOS[]\ny toma MENSAJES[i]
+    ex --> dao : DatosException
+    dao -->> srv : DatosException
+    srv -> bd : rollback()
+    srv -->> ctl : DatosException
+  else correcto
+    dao --> srv : id generado
+    srv -> bd : commit()
+    srv --> ctl : id
+  end
+end
+opt llegó una DatosException
+  ctl -> ctl : catch (SQLException e)\nDialogos.errorBase(e)
+  ctl --> op : mensaje en castellano +\ndetalle técnico del servidor
+end
+@enduml
